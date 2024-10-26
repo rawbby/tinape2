@@ -21,7 +21,7 @@ target_include_directories(${TARGET_NAME} INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}
 target_link_libraries(${TARGET_NAME} INTERFACE SDL3::SDL3-static)
 target_link_libraries(${TARGET_NAME} INTERFACE SDL3_net::SDL3_net-static)
 
-set_target_properties(${EXECUTABLE_NAME} PROPERTIES
+set_target_properties(${TARGET_NAME} PROPERTIES
         LINKER_LANGUAGE CXX
         CXX_STANDARD ${CMAKE_CXX_STANDARD}
         CXX_STANDARD_REQUIRED ${CMAKE_CXX_STANDARD_REQUIRED})
