@@ -1,0 +1,24 @@
+BasedOnStyle: Mozilla
+Standard: c++20
+ColumnLimit: 180
+IndentWidth: 2
+UseTab: Never
+MaxEmptyLinesToKeep: 1
+
+AlignConsecutiveAssignments:
+  Enabled: true
+AlignConsecutiveDeclarations:
+  Enabled: true
+AllowShortBlocksOnASingleLine: Never
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+AllowShortLambdasOnASingleLine: All
+BinPackParameters: AlwaysOnePerLine
+BreakBeforeBinaryOperators: None
+BreakFunctionDefinitionParameters: true
+CompactNamespaces: true
+DerivePointerAlignment: false
+FixNamespaceComments: true
+PointerAlignment: Left
+QualifierAlignment: Right
+ShortNamespaceLines: 0
