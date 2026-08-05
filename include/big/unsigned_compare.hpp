@@ -38,11 +38,13 @@ operator<=>(
     }
   }
 
-  while (index > 0) {
-    --index;
-    auto const cmp = lhs.element(index) <=> rhs.element(index);
-    if (cmp != std::strong_ordering::equal) {
-      return cmp;
+  if constexpr (min > 0) {
+    while (index > 0) {
+      --index;
+      auto const cmp = lhs.element(index) <=> rhs.element(index);
+      if (cmp != std::strong_ordering::equal) {
+        return cmp;
+      }
     }
   }
 

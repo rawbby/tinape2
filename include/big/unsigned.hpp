@@ -231,6 +231,7 @@ struct UnsignedBig
   constexpr void element(
     Size    index,
     Element value)
+    requires(!gIsZeroData)
   {
     if (std::is_constant_evaluated()) {
       if (index >= gNumElements) {
@@ -238,11 +239,7 @@ struct UnsignedBig
       }
     }
 
-    if constexpr (gIsZeroData) {
-      // todo zero data should not be setted
-    }
-
-    else if constexpr (gIsArrayData) {
+    if constexpr (gIsArrayData) {
       mData[index] = value;
     }
 
@@ -265,6 +262,7 @@ struct UnsignedBig
 
   [[nodiscard]] constexpr auto element(
     Size index) const -> Element
+    requires(!gIsZeroData)
   {
     if (std::is_constant_evaluated()) {
       if (index >= gNumElements) {
@@ -272,12 +270,7 @@ struct UnsignedBig
       }
     }
 
-    if constexpr (gIsZeroData) {
-      // todo zero data should not be getted
-      return static_cast<Element>(0);
-    }
-
-    else if constexpr (gIsArrayData) {
+    if constexpr (gIsArrayData) {
       return mData[index];
     }
 
