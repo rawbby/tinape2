@@ -25,24 +25,29 @@ struct SignedBig
   constexpr static auto gSignType = signType;
   constexpr static auto gBits     = bits;
 
+  constexpr static auto gIsRuntimeSign   = gSignType == SignType::Runtime;
+  constexpr static auto gIsntRuntimeSign = gSignType != SignType::Runtime;
+  constexpr static auto gIsPositiveSign  = gSignType == SignType::Positive;
+  constexpr static auto gIsNegativeSign  = gSignType == SignType::Negative;
+
   using UnsignedT   = UnsignedBig<bits>;
-  using UnderlyingT = std::conditional_t<SignType::Runtime == signType, std::tuple<UnsignedT, bool>, std::tuple<UnsignedT>>;
+  using UnderlyingT = std::conditional_t<gIsRuntimeSign, std::tuple<UnsignedT, bool>, std::tuple<UnsignedT>>;
 
   [[no_unique_address]] UnderlyingT mUnderlying{};
 
   constexpr SignedBig() = default;
 
   constexpr explicit SignedBig(
-    UnsignedT const& value)
-    requires(SignType::Runtime != signType)
+    auto const& value)
+    requires gIsntRuntimeSign && requires { UnsignedT{ value }; }
     : mUnderlying(value)
   {
   }
 
   constexpr SignedBig(
-    UnsignedT const& value,
-    bool             sign)
-    requires(signType == SignType::Runtime)
+    auto const& value,
+    bool        sign)
+    requires gIsRuntimeSign && requires { UnsignedT{ value }; }
     : mUnderlying(value,
                   sign)
   {
@@ -50,17 +55,17 @@ struct SignedBig
 
   constexpr SignedBig(
     SignTag<signType> /* tag */,
-    UnsignedT const& value)
-    requires(SignType::Runtime != signType)
+    auto const& value)
+    requires gIsntRuntimeSign && requires { UnsignedT{ value }; }
     : mUnderlying(value)
   {
   }
 
   constexpr SignedBig(
     SignTag<signType> /* tag */,
-    UnsignedT const& value,
-    bool             sign)
-    requires(SignType::Runtime == signType)
+    auto const& value,
+    bool        sign)
+    requires gIsRuntimeSign && requires { UnsignedT{ value }; }
     : mUnderlying(value,
                   sign)
   {
@@ -68,20 +73,22 @@ struct SignedBig
 
   template<SignType rhsSignType,
            Size     rhsBits>
-    requires((rhsBits <= bits) && (SignType::Runtime == signType) && (rhsBits != bits || rhsSignType != signType))
+    requires(rhsBits != bits || rhsSignType != signType)
   constexpr explicit SignedBig(
     SignedBig<rhsSignType,
               rhsBits> const& rhs)
+    requires gIsRuntimeSign && requires { UnsignedT{ rhs.abs() }; }
     : mUnderlying(rhs.abs(),
                   rhs.sign())
   {
   }
 
   template<Size rhsBits>
-    requires((rhsBits <= bits) && (SignType::Runtime != signType) && (rhsBits != bits))
+    requires(rhsBits != bits)
   constexpr explicit SignedBig(
     SignedBig<signType,
               rhsBits> const& rhs)
+    requires gIsntRuntimeSign && requires { UnsignedT{ rhs.abs() }; }
     : mUnderlying(rhs.abs())
   {
   }
@@ -101,22 +108,19 @@ struct SignedBig
   }
 };
 
-template<SignType signType,
-         Size     bits>
+template<SignType signType>
   requires(signType != SignType::Runtime)
 SignedBig(SignTag<signType>,
-          UnsignedBig<bits>) -> SignedBig<signType,
-                                          bits>;
+          auto const& value) -> SignedBig<signType,
+                                          decltype(UnsignedBig{ value })::gBits>;
 
-template<Size bits>
 SignedBig(SignTag<SignType::Runtime>,
-          UnsignedBig<bits>,
+          auto const& value,
           bool) -> SignedBig<SignType::Runtime,
-                             bits>;
+                             decltype(UnsignedBig{ value })::gBits>;
 
-template<Size bits>
-SignedBig(UnsignedBig<bits>,
+SignedBig(auto const& value,
           bool) -> SignedBig<SignType::Runtime,
-                             bits>;
+                             decltype(UnsignedBig{ value })::gBits>;
 
 } // namespace big
