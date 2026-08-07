@@ -28,8 +28,8 @@ constexpr auto gUnsignedBig = [] {
   constexpr auto neededArrayBits = [neededUintBits]<Size size>(std::array<Element, size> const & elements) {
     for (Size i = elements.size(); i > 0;) {
       --i;
-      if (elements[i] != Element{ 0 }) {
-        return i * gElementBits + neededUintBits(elements[i]);
+      if (elements[i] != Element{ 0 }) {                       // NOLINT(*-constant-array-index)
+        return i * gElementBits + neededUintBits(elements[i]); // NOLINT(*-constant-array-index)
       }
     }
     return Size{ 0 };

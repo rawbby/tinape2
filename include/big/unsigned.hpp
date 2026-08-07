@@ -25,11 +25,11 @@ struct UnsignedBig
                std::conditional_t<bits <= gU32Bits, U32,
                std::conditional_t<bits <= gElementBits, Element,
                std::conditional_t<bits <= gWideBits, Wide,
-               std::array<Element, gNumElements>>>>>>;
+               Elements<gNumElements>>>>>>;
   // clang-format on
 
   constexpr static auto gIsZeroData  = Is<Data, ZeroData>;
-  constexpr static auto gIsArrayData = Is<Data, std::array<Element, gNumElements>>;
+  constexpr static auto gIsArrayData = Is<Data, Elements<gNumElements>>;
   constexpr static auto gIsIntData   = !gIsZeroData && !gIsArrayData;
 
   constexpr static auto gIsElementData = Is<Data, Element>;
@@ -47,9 +47,9 @@ struct UnsignedBig
   [[no_unique_address]] Data mData;
 
   constexpr UnsignedBig()                             = default;
+  constexpr ~UnsignedBig()                            = default;
   constexpr UnsignedBig(UnsignedBig const& other)     = default;
   constexpr UnsignedBig(UnsignedBig&& other) noexcept = default;
-  constexpr ~UnsignedBig()                            = default;
 
   constexpr auto operator=(UnsignedBig const& other) -> UnsignedBig&     = default;
   constexpr auto operator=(UnsignedBig&& other) noexcept -> UnsignedBig& = default;
@@ -62,8 +62,7 @@ struct UnsignedBig
     set<true>(other.mData);
   }
 
-  template<typename Value>
-    requires(std::unsigned_integral<Value> || IsElement<Value> || IsWide<Value>)
+  template<IsUnsignedIntegral Value>
   constexpr explicit UnsignedBig(
     Value value)
     requires(gBitsOf<Value> <= gBits)
@@ -73,22 +72,18 @@ struct UnsignedBig
 
   template<Size size>
   constexpr explicit UnsignedBig(
-    std::array<Element,
-               size> const& elements)
-    requires(size* gElementBits <= gBits)
+    Elements<size> const& elements)
+    requires(gBitsOf<Elements<size>> <= gBits)
   {
     set<true>(elements);
   }
 
   template<Size size>
   constexpr explicit UnsignedBig(
-    std::array<U32,
-               size> const& elements)
-    requires(!Is<Element,
-                 U32> &&
-             size * gBitsOf<U32> <= gBits)
+    Limbs<size> const& limbs)
+    requires(!gLimbIsElement && gBitsOf<Limbs<size>> <= gBits)
   {
-    set<true>(elements);
+    set<true>(limbs);
   }
 
   template<Size otherBits>
@@ -100,8 +95,7 @@ struct UnsignedBig
     return *this;
   }
 
-  template<typename Value>
-    requires(std::unsigned_integral<Value> || IsElement<Value> || IsWide<Value>)
+  template<IsUnsignedIntegral Value>
   constexpr auto operator=(
     Value value) -> UnsignedBig&
     requires(gBitsOf<Value> <= gBits)
@@ -112,9 +106,8 @@ struct UnsignedBig
 
   template<Size size>
   constexpr auto operator=(
-    std::array<Element,
-               size> const& elements) -> UnsignedBig&
-    requires(size* gElementBits <= gBits)
+    Elements<size> const& elements) -> UnsignedBig&
+    requires(gBitsOf<Elements<size>> <= gBits)
   {
     set<true>(elements);
     return *this;
@@ -122,11 +115,8 @@ struct UnsignedBig
 
   template<Size size>
   constexpr auto operator=(
-    std::array<U32,
-               size> const& elements) -> UnsignedBig&
-    requires(!Is<Element,
-                 U32> &&
-             size * gBitsOf<U32> <= gBits)
+    Limbs<size> const& elements) -> UnsignedBig&
+    requires(!gLimbIsElement && gBitsOf<Limbs<size>> <= gBits)
   {
     set<true>(elements);
     return *this;
@@ -140,8 +130,7 @@ struct UnsignedBig
     set<false>(other.mData);
   }
 
-  template<typename Value>
-    requires(std::unsigned_integral<Value> || IsElement<Value> || IsWide<Value>)
+  template<IsUnsignedIntegral Value>
   consteval explicit UnsignedBig(
     Value value)
     requires(gBitsOf<Value> > gBits)
@@ -149,30 +138,24 @@ struct UnsignedBig
     set<false>(value);
   }
 
-  template<typename Value>
-    requires(std::integral<Value> && !std::unsigned_integral<Value>)
   consteval explicit UnsignedBig(
-    Value value)
+    IsSignedIntegral auto value)
   {
     set<false>(value);
   }
 
   template<Size size>
   consteval explicit UnsignedBig(
-    std::array<Element,
-               size> const& elements)
-    requires(size* gElementBits > gBits)
+    Elements<size> const& elements)
+    requires(gBitsOf<Elements<size>> > gBits)
   {
     set<false>(elements);
   }
 
   template<Size size>
   consteval explicit UnsignedBig(
-    std::array<U32,
-               size> const& elements)
-    requires(!Is<Element,
-                 U32> &&
-             size * gBitsOf<U32> > gBits)
+    Limbs<size> const& elements)
+    requires(!gLimbIsElement && gBitsOf<Limbs<size>> > gBits)
   {
     set<false>(elements);
   }
@@ -186,8 +169,7 @@ struct UnsignedBig
     return *this;
   }
 
-  template<typename Value>
-    requires(std::unsigned_integral<Value> || IsElement<Value> || IsWide<Value>)
+  template<IsUnsignedIntegral Value>
   consteval auto operator=(
     Value value) -> UnsignedBig&
     requires(gBitsOf<Value> > gBits)
@@ -196,10 +178,8 @@ struct UnsignedBig
     return *this;
   }
 
-  template<typename Value>
-    requires(std::integral<Value> && !std::unsigned_integral<Value>)
   consteval auto operator=(
-    Value value) -> UnsignedBig&
+    IsSignedIntegral auto value) -> UnsignedBig&
   {
     set<false>(value);
     return *this;
@@ -207,9 +187,8 @@ struct UnsignedBig
 
   template<Size size>
   consteval auto operator=(
-    std::array<Element,
-               size> const& elements) -> UnsignedBig&
-    requires(size* gElementBits > gBits)
+    Elements<size> const& elements) -> UnsignedBig&
+    requires(gBitsOf<Elements<size>> > gBits)
   {
     set<false>(elements);
     return *this;
@@ -217,11 +196,8 @@ struct UnsignedBig
 
   template<Size size>
   consteval auto operator=(
-    std::array<U32,
-               size> const& elements) -> UnsignedBig&
-    requires(!Is<Element,
-                 U32> &&
-             size * gBitsOf<U32> > gBits)
+    Limbs<size> const& elements) -> UnsignedBig&
+    requires(!gLimbIsElement && gBitsOf<Limbs<size>> > gBits)
   {
     set<false>(elements);
     return *this;
@@ -317,9 +293,8 @@ struct UnsignedBig
   }
 
 private:
-  template<bool skipCheck,
-           typename Value>
-    requires(std::integral<Value> || IsElement<Value> || IsWide<Value>)
+  template<bool       skipCheck,
+           IsIntegral Value>
   constexpr void set(
     Value value)
   {
@@ -328,9 +303,9 @@ private:
         if (value < 0) {
           throw std::invalid_argument{ "argument must be non-negative" };
         }
-        if constexpr (std::signed_integral<Value>) {
-          using UValue = std::make_unsigned_t<Value>;
-          if (UnsignedBig<gBitsOf<UValue>>{ static_cast<UValue>(value) } > max()) {
+        if constexpr (IsSignedIntegral<Value>) {
+          using Unsigned = MakeUnsigned<Value>;
+          if (UnsignedBig<gBitsOf<Unsigned>>{ static_cast<Unsigned>(value) } > max()) {
             throw std::invalid_argument{ "argument does not fit" };
           }
         } else if (UnsignedBig<gBitsOf<Value>>{ value } > max()) {
@@ -345,8 +320,8 @@ private:
 
     else if constexpr (gIsArrayData) {
       if constexpr (IsWide<Value>) {
-        element(0, loElement(value));
-        element(1, hiElement(value));
+        element(0, loHalf(value));
+        element(1, hiHalf(value));
         fillZero(2);
       } else {
         element(0, static_cast<Element>(value));
@@ -363,11 +338,10 @@ private:
   template<bool skipCheck,
            Size size>
   constexpr void set(
-    std::array<Element,
-               size> const& elements)
+    Elements<size> const& elements)
   {
     if (std::is_constant_evaluated()) {
-      if (!skipCheck && UnsignedBig<size * gElementBits>{ elements } > max()) {
+      if (!skipCheck && UnsignedBig<gBitsOf<Elements<size>>>{ elements } > max()) {
         throw std::invalid_argument{ "argument does not fit" };
       }
     }
@@ -383,16 +357,14 @@ private:
 
   template<bool skipCheck,
            Size size>
-    requires(!Is<Element,
-                 U32>)
+    requires(!gLimbIsElement)
   constexpr void set(
-    std::array<U32,
-               size> const& elements)
+    Limbs<size> const& limbs)
   {
-    static_assert(gElementBytes == gU32Bytes * 2);
+    static_assert(gElementBytes == gLimbBytes * 2);
 
     if (std::is_constant_evaluated()) {
-      if (!skipCheck && UnsignedBig<size * gBitsOf<U32>>{ elements } > max()) {
+      if (!skipCheck && UnsignedBig<gBitsOf<Limbs<size>>>{ limbs } > max()) {
         throw std::invalid_argument{ "argument does not fit" };
       }
     }
@@ -404,9 +376,9 @@ private:
 
     constexpr auto min = std::min(gNumElements * 2, size);
     for (Size i = 0; i < min; i += 2) {
-      Element value = elements[i];
+      Element value = limbs[i];
       if (i + 1 < size) {
-        value |= static_cast<Element>(elements[i + 1]) << gBitsOf<U32>;
+        value |= static_cast<Element>(limbs[i + 1]) << gBitsOf<Limb>;
       }
       element(i / 2, value);
     }
@@ -442,22 +414,17 @@ private:
 
 UnsignedBig() -> UnsignedBig<0>;
 
-template<typename Value>
-  requires(std::unsigned_integral<Value> || IsElement<Value> || IsWide<Value>)
+template<IsUnsignedIntegral Value>
 UnsignedBig(Value) -> UnsignedBig<gBitsOf<Value>>;
 
-template<typename Value>
-  requires(std::signed_integral<Value>)
+template<IsSignedIntegral Value>
 UnsignedBig(Value) -> UnsignedBig<gBitsOf<Value> - 1>;
 
 template<Size size>
-UnsignedBig(std::array<Element,
-                       size>) -> UnsignedBig<size * gElementBits>;
+UnsignedBig(Elements<size>) -> UnsignedBig<gBitsOf<Elements<size>>>;
 
 template<Size size>
-  requires(!Is<Element,
-               U32>)
-UnsignedBig(std::array<U32,
-                       size>) -> UnsignedBig<size * gBitsOf<U32>>;
+  requires(!gLimbIsElement)
+UnsignedBig(Limbs<size>) -> UnsignedBig<gBitsOf<Limbs<size>>>;
 
 } // namespace big

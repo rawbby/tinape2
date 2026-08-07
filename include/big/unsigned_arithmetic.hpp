@@ -94,15 +94,15 @@ operator-(
     // loop common elements for all
     for (; i < std::min(LhsType::gNumElements, RhsType::gNumElements); ++i) {
       auto const differenceElement = static_cast<Wide>(lhs.element(i)) - rhs.element(i) - borrow;
-      difference.element(i, loElement(differenceElement));
-      borrow = hiElement(differenceElement) & 1U;
+      difference.element(i, loHalf(differenceElement));
+      borrow = hiHalf(differenceElement) & 1U;
     }
 
     // lhs tail for diff, rhs reads as zero
     for (; i < LhsType::gNumElements; ++i) {
       auto const differenceElement = static_cast<Wide>(lhs.element(i)) - borrow;
-      difference.element(i, loElement(differenceElement));
-      borrow = hiElement(differenceElement) & 1U;
+      difference.element(i, loHalf(differenceElement));
+      borrow = hiHalf(differenceElement) & 1U;
     }
 
     // any rhs tail beyond lhs is discarded: the result wraps modulo 2^lhsBits
@@ -159,6 +159,7 @@ operator*(
   }
 }
 
+// NOLINTBEGIN(*-macro-usage)
 // clang-format off
 #ifdef BIG_MAKE_WRAPPER
 #error "BIG_MAKE_WRAPPER is already defined"
@@ -182,5 +183,6 @@ BIG_MAKE_WRAPPER(-)
 BIG_MAKE_WRAPPER(*)
 #undef BIG_MAKE_WRAPPER
 // clang-format on
+// NOLINTEND(*-macro-usage)
 
 } // namespace big

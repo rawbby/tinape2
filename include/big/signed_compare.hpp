@@ -47,10 +47,10 @@ template<SignType lhsSignType,
          Size     rhsBits>
 constexpr auto
 operator==(
-  SignedBig<lhsSignType,
-            lhsBits> const& lhs,
-  SignedBig<rhsSignType,
-            rhsBits> const& rhs) -> bool
+  GenericSigned<lhsSignType,
+                lhsBits> const& lhs,
+  GenericSigned<rhsSignType,
+                rhsBits> const& rhs) -> bool
 {
   return std::is_eq(lhs <=> rhs);
 }

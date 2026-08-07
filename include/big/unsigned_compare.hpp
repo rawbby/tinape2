@@ -86,6 +86,7 @@ operator==(
   return true;
 }
 
+// NOLINTBEGIN(*-macro-usage)
 // clang-format off
 #ifdef BIG_MAKE_WRAPPER
 #error "BIG_MAKE_WRAPPER is already defined"
@@ -108,5 +109,6 @@ BIG_MAKE_WRAPPER(<=>)
 BIG_MAKE_WRAPPER(==)
 #undef BIG_MAKE_WRAPPER
 // clang-format on
+// NOLINTEND(*-macro-usage)
 
 } // namespace big

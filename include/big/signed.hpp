@@ -2,125 +2,38 @@
 
 #include <big/common.hpp>   // big::SignType, big::BigElement
 #include <big/unsigned.hpp> // big::UnsignedBig
+#include <common/tag.hpp>   // Tag, gTag
 
 #include <tuple>       // std::tuple, std::get
 #include <type_traits> // std::conditional_t
 
 namespace big {
 
-template<SignType>
-struct SignTag
-{};
-
-template<SignType signType>
-inline constexpr auto gSignTag = SignTag<signType>{};
-
-inline constexpr auto gPositive = gSignTag<SignType::Positive>;
-inline constexpr auto gRuntime  = gSignTag<SignType::Runtime>;
-inline constexpr auto gNegative = gSignTag<SignType::Negative>;
-
 template<SignType signType, Size bits>
-struct SignedBig
+struct GenericSigned
 {
-  constexpr static auto gSignType = signType;
-  constexpr static auto gBits     = bits;
+  [[no_unique_address]] std::conditional_t<signType == Runtime, std::tuple<UnsignedBig<bits>, bool>, std::tuple<UnsignedBig<bits>>> mUnderlying{};
 
-  constexpr static auto gIsRuntimeSign   = gSignType == SignType::Runtime;
-  constexpr static auto gIsntRuntimeSign = gSignType != SignType::Runtime;
-  constexpr static auto gIsPositiveSign  = gSignType == SignType::Positive;
-  constexpr static auto gIsNegativeSign  = gSignType == SignType::Negative;
+  constexpr GenericSigned()                     = default;
+  constexpr ~GenericSigned()                    = default;
+  constexpr GenericSigned(GenericSigned&&)      = default;
+  constexpr GenericSigned(GenericSigned const&) = default;
 
-  using UnsignedT   = UnsignedBig<bits>;
-  using UnderlyingT = std::conditional_t<gIsRuntimeSign, std::tuple<UnsignedT, bool>, std::tuple<UnsignedT>>;
+  constexpr auto operator=(GenericSigned&&) -> GenericSigned&      = default;
+  constexpr auto operator=(GenericSigned const&) -> GenericSigned& = default;
 
-  [[no_unique_address]] UnderlyingT mUnderlying{};
-
-  constexpr SignedBig() = default;
-
-  constexpr explicit SignedBig(
-    auto const& value)
-    requires gIsntRuntimeSign && requires { UnsignedT{ value }; }
-    : mUnderlying(value)
-  {
-  }
-
-  constexpr SignedBig(
-    auto const& value,
-    bool        sign)
-    requires gIsRuntimeSign && requires { UnsignedT{ value }; }
-    : mUnderlying(value,
-                  sign)
-  {
-  }
-
-  constexpr SignedBig(
-    SignTag<signType> /* tag */,
-    auto const& value)
-    requires gIsntRuntimeSign && requires { UnsignedT{ value }; }
-    : mUnderlying(value)
-  {
-  }
-
-  constexpr SignedBig(
-    SignTag<signType> /* tag */,
-    auto const& value,
-    bool        sign)
-    requires gIsRuntimeSign && requires { UnsignedT{ value }; }
-    : mUnderlying(value,
-                  sign)
-  {
-  }
-
-  template<SignType rhsSignType,
-           Size     rhsBits>
-    requires(rhsBits != bits || rhsSignType != signType)
-  constexpr explicit SignedBig(
-    SignedBig<rhsSignType,
-              rhsBits> const& rhs)
-    requires gIsRuntimeSign && requires { UnsignedT{ rhs.abs() }; }
-    : mUnderlying(rhs.abs(),
-                  rhs.sign())
-  {
-  }
-
-  template<Size rhsBits>
-    requires(rhsBits != bits)
-  constexpr explicit SignedBig(
-    SignedBig<signType,
-              rhsBits> const& rhs)
-    requires gIsntRuntimeSign && requires { UnsignedT{ rhs.abs() }; }
-    : mUnderlying(rhs.abs())
-  {
-  }
-
-  [[nodiscard]] constexpr auto abs() const -> UnsignedT const&
+  [[nodiscard]] constexpr auto abs() const -> UnsignedBig<bits> const&
   {
     return std::get<0>(mUnderlying);
   }
 
   [[nodiscard]] constexpr auto sign() const -> bool
   {
-    if constexpr (signType != SignType::Runtime) {
-      return signType == SignType::Positive;
-    } else {
+    if constexpr (signType == Runtime) {
       return std::get<1>(mUnderlying);
     }
+    return signType == Positive;
   }
 };
-
-template<SignType signType>
-  requires(signType != SignType::Runtime)
-SignedBig(SignTag<signType>,
-          auto const& value) -> SignedBig<signType,
-                                          decltype(UnsignedBig{ value })::gBits>;
-
-SignedBig(SignTag<SignType::Runtime>,
-          auto const& value,
-          bool) -> SignedBig<SignType::Runtime,
-                             decltype(UnsignedBig{ value })::gBits>;
-
-SignedBig(auto const& value,
-          bool) -> SignedBig<SignType::Runtime,
-                             decltype(UnsignedBig{ value })::gBits>;
 
 } // namespace big

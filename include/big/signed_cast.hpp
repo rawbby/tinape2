@@ -14,18 +14,18 @@ template<IsSignedBig ToSignedBig,
          Size        fromBits>
 [[nodiscard]] constexpr auto
 castBigUnsafe(
-  SignedBig<fromSignType,
-            fromBits> const& fromValue) -> ToSignedBig
+  GenericSigned<fromSignType,
+                fromBits> const& fromValue) -> ToSignedBig
 {
   if constexpr (SignType::Runtime == ToSignedBig::gSignType) {
     return {
-      castBigUnsafe<ToSignedBig::UnsignedT>(fromValue.abs()),
+      castBigUnsafe<ToSignedBig::UnsignedBig>(fromValue.abs()),
       fromValue.sign(),
     };
 
   } else {
     return {
-      castBigUnsafe<ToSignedBig::UnsignedT>(fromValue.abs()),
+      castBigUnsafe<ToSignedBig::UnsignedBig>(fromValue.abs()),
       SignType::Positive == ToSignedBig::gSignType,
     };
   }
@@ -38,10 +38,10 @@ template<IsSignedBig ToSignedBig,
          Size        fromBits>
 [[nodiscard]] constexpr auto
 castBigSafe(
-  SignedBig<fromSignType,
-            fromBits> const& fromValue) -> std::optional<ToSignedBig>
+  GenericSigned<fromSignType,
+                fromBits> const& fromValue) -> std::optional<ToSignedBig>
 {
-  using ToUnsigned          = ToSignedBig::UnsignedT;
+  using ToUnsigned          = ToSignedBig::UnsignedBig;
   constexpr auto toSignType = ToSignedBig::gSignType;
   constexpr auto toSign     = SignType::Positive == toSignType;
 

@@ -10,15 +10,15 @@ template<SignType signType,
          Size     bits>
 constexpr auto
 operator-(
-  SignedBig<signType,
-            bits> const& value)
+  GenericSigned<signType,
+                bits> const& value)
 {
   if constexpr (SignType::Positive == signType) {
-    return SignedBig<SignType::Negative, bits>{ value.abs() };
+    return GenericSigned<SignType::Negative, bits>{ value.abs() };
   } else if constexpr (SignType::Negative == signType) {
-    return SignedBig<SignType::Positive, bits>{ value.abs() };
+    return GenericSigned<SignType::Positive, bits>{ value.abs() };
   } else { // Positive == sign
-    return SignedBig<SignType::Runtime, bits>{ value.abs(), !value.sign() };
+    return GenericSigned<SignType::Runtime, bits>{ value.abs(), !value.sign() };
   }
 }
 
@@ -28,19 +28,19 @@ template<SignType lhsSignType,
          Size     rhsBits>
 constexpr auto
 operator+(
-  SignedBig<lhsSignType,
-            lhsBits> const& lhs,
-  SignedBig<rhsSignType,
-            rhsBits> const& rhs)
+  GenericSigned<lhsSignType,
+                lhsBits> const& lhs,
+  GenericSigned<rhsSignType,
+                rhsBits> const& rhs)
 {
   // if compile time sign equality
   if constexpr (SignType::Runtime != lhsSignType && lhsSignType == rhsSignType) {
-    return SignedBig{ lhsSignType, lhs.abs() + rhs.abs() };
+    return GenericSigned{ lhsSignType, lhs.abs() + rhs.abs() };
 
   } else { // all other cases require runtime evaluation
 
     // ensure compile time known return type that fits all return paths
-    using SignedBigT = SignedBig<SignType::Runtime, decltype(lhs.abs() + rhs.abs())::gBits>;
+    using SignedBigT = GenericSigned<SignType::Runtime, decltype(lhs.abs() + rhs.abs())::gBits>;
 
     // positive + positive || negative + negative
     if (lhs.sign() == rhs.sign()) {
@@ -71,19 +71,19 @@ template<SignType lhsSignType,
          Size     rhsBits>
 constexpr auto
 operator-(
-  SignedBig<lhsSignType,
-            lhsBits> const& lhs,
-  SignedBig<rhsSignType,
-            rhsBits> const& rhs)
+  GenericSigned<lhsSignType,
+                lhsBits> const& lhs,
+  GenericSigned<rhsSignType,
+                rhsBits> const& rhs)
 {
   // if compile time sign inequality
   if constexpr (SignType::Runtime != lhsSignType && SignType::Runtime != rhsSignType && lhsSignType != rhsSignType) {
-    return SignedBig{ lhsSignType, lhs.abs() + rhs.abs() };
+    return GenericSigned{ lhsSignType, lhs.abs() + rhs.abs() };
 
   } else { // all other cases require runtime evaluation
 
     // ensure compile time known return type that fits all return paths
-    using SignedBigT = SignedBig<SignType::Runtime, decltype(lhs.abs() + rhs.abs())::gBits>;
+    using SignedBigT = GenericSigned<SignType::Runtime, decltype(lhs.abs() + rhs.abs())::gBits>;
 
     // positive - negative || negative - positive
     if (lhs.sign() != rhs.sign()) {
@@ -114,19 +114,19 @@ template<SignType lhsSignType,
          Size     rhsBits>
 constexpr auto
 operator*(
-  SignedBig<lhsSignType,
-            lhsBits> const& lhs,
-  SignedBig<rhsSignType,
-            rhsBits> const& rhs)
+  GenericSigned<lhsSignType,
+                lhsBits> const& lhs,
+  GenericSigned<rhsSignType,
+                rhsBits> const& rhs)
 {
   if constexpr (SignType::Runtime == lhsSignType || SignType::Runtime == rhsSignType) {
-    return SignedBig{ SignType::Runtime, lhs.abs() * rhs.abs(), lhs.sign() == rhs.sign() };
+    return GenericSigned{ SignType::Runtime, lhs.abs() * rhs.abs(), lhs.sign() == rhs.sign() };
 
   } else if constexpr (rhsSignType == lhsSignType) {
-    return SignedBig{ SignType::Positive, lhs.abs() * rhs.abs() };
+    return GenericSigned{ SignType::Positive, lhs.abs() * rhs.abs() };
 
   } else { // rhsSignType != lhsSignType
-    return SignedBig{ SignType::Negative, lhs.abs() * rhs.abs() };
+    return GenericSigned{ SignType::Negative, lhs.abs() * rhs.abs() };
   }
 }
 } // namespace big
