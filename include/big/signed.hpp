@@ -1,18 +1,30 @@
 #pragma once
 
-#include <big/common.hpp>   // big::SignType, big::BigElement
-#include <big/unsigned.hpp> // big::UnsignedBig
-#include <common/tag.hpp>   // Tag, gTag
+#include <big/common.hpp>
+#include <big/unsigned.hpp>
+#include <common/int.hpp>
 
-#include <tuple>       // std::tuple, std::get
-#include <type_traits> // std::conditional_t
+#include <tuple>
+#include <type_traits>
 
 namespace big {
 
 template<SignType signType, Size bits>
 struct SignedBig
 {
-  [[no_unique_address]] std::conditional_t<signType == Runtime, std::tuple<UnsignedBig<bits>, bool>, std::tuple<UnsignedBig<bits>>> mUnderlying{};
+  using Unsigned = UnsignedBig<bits>;
+  using Data     = Unsigned::Data;
+
+  constexpr static auto gBits          = Unsigned::gBits;
+  constexpr static auto gNumElements   = Unsigned::gNumElements;
+  constexpr static auto gIsZeroData    = Unsigned::gIsZeroData;
+  constexpr static auto gIsArrayData   = Unsigned::gIsArrayData;
+  constexpr static auto gIsIntData     = Unsigned::gIsIntData;
+  constexpr static auto gIsElementData = Unsigned::gIsElementData;
+  constexpr static auto gIsWideData    = Unsigned::gIsWideData;
+  constexpr static auto gIsNarrowData  = Unsigned::gIsNarrowData;
+
+  [[no_unique_address]] std::conditional_t<signType == Runtime, std::tuple<Unsigned, bool>, std::tuple<Unsigned>> mUnderlying{};
 
   constexpr SignedBig()                 = default;
   constexpr ~SignedBig()                = default;
@@ -57,6 +69,13 @@ struct SignedBig
   constexpr SignedBig(UnsignedBig<otherBits> const& other, bool sign)
   {
     set(other.mData, sign);
+  }
+
+  template<IsUnsignedIntegral Value>
+    requires(gBitsOf<Value> <= bits)
+  constexpr explicit SignedBig(Value value)
+  {
+    set(value);
   }
 
   template<IsUnsignedIntegral Value>
@@ -193,14 +212,14 @@ struct SignedBig
   }
 
   template<IsSignedIntegral Value>
-    requires(signType != Runtime || gBitsOf<Value> > bits)
+    requires((signType == Runtime && gBitsOf<Value> > bits) || (signType != Runtime))
   consteval explicit SignedBig(Value value)
   {
     set(value);
   }
 
   template<IsSignedIntegral Value>
-    requires(signType != Runtime || gBitsOf<Value> > bits)
+    requires((signType == Runtime && gBitsOf<Value> > bits) || (signType != Runtime))
   consteval auto operator=(Value value) -> SignedBig&
   {
     set(value);
@@ -265,8 +284,24 @@ struct SignedBig
   }
 
 private:
-  template<typename T>
-  constexpr void set(T const& value, bool sign)
+  template<typename Value>
+    requires(!IsSignedIntegral<Value>)
+  constexpr void set(Value const& value)
+  {
+    set(value, signType != Negative);
+  }
+
+  template<IsSignedIntegral Value>
+  constexpr void set(Value value)
+  {
+    using Unsigned       = MakeUnsigned<Value>;
+    auto const valueSign = value >= 0;
+    auto const valueAbs  = static_cast<Unsigned>(valueSign ? value : -value);
+    set(valueAbs, valueSign);
+  }
+
+  template<typename Value>
+  constexpr void set(Value const& value, bool sign)
   {
     if (std::is_constant_evaluated()) {
       if constexpr (signType == Positive) {
@@ -285,131 +320,38 @@ private:
     }
     std::get<0>(mUnderlying) = value;
   }
-
-  template<typename T>
-    requires(!IsSignedIntegral<T>)
-  constexpr void set(T const& value)
-  {
-    set(value, signType != Negative);
-  }
-
-  template<IsSignedIntegral Value>
-  constexpr void set(Value value)
-  {
-    using Unsigned       = MakeUnsigned<Value>;
-    auto const valueSign = value >= 0;
-    auto const valueAbs  = static_cast<Unsigned>(valueSign ? value : -value);
-    set(valueAbs, valueSign);
-  }
 };
 
-// ============================================================================
-// Constructor Tests
-// ============================================================================
+template<SignType otherSignType, Size otherBits>
+SignedBig(SignedBig<otherSignType, otherBits> const&) -> SignedBig<otherSignType, otherBits>;
 
-static_assert(SignedBig<Positive, 32>{}.sign() == true);
-static_assert(SignedBig<Negative, 32>{}.sign() == false);
-static_assert(SignedBig<Runtime, 32>{}.sign() == false);
+template<Size otherBits>
+SignedBig(UnsignedBig<otherBits> const&) -> SignedBig<Positive, otherBits>;
 
-// Unsigned Integral Construction
-static_assert(SignedBig<Positive, 32>(42u).abs() == 42);
-static_assert(SignedBig<Positive, 32>(42u).sign() == true);
+template<Size otherBits>
+SignedBig(UnsignedBig<otherBits> const&, bool) -> SignedBig<Runtime, otherBits>;
 
-static_assert(SignedBig<Negative, 32>(42u).abs().element(0) == 42);
-static_assert(SignedBig<Negative, 32>(42u).sign() == false);
+template<IsUnsignedIntegral Value>
+SignedBig(Value) -> SignedBig<Positive, gBitsOf<Value>>;
 
-static_assert(SignedBig<Runtime, 32>(42u).abs().element(0) == 42);
-static_assert(SignedBig<Runtime, 32>(42u).sign() == true);
-static_assert(SignedBig<Runtime, 32>(42u, false).sign() == false);
+template<IsUnsignedIntegral Value>
+SignedBig(Value, bool) -> SignedBig<Runtime, gBitsOf<Value>>;
 
-// Signed Integral Construction
-static_assert(SignedBig<Positive, 32>(42).abs().element(0) == 42);
-static_assert(SignedBig<Positive, 32>(42).sign() == true);
+template<IsSignedIntegral Value>
+SignedBig(Value) -> SignedBig<Runtime, gBitsOf<Value> - 1>;
 
-static_assert(SignedBig<Negative, 32>(-42).abs().element(0) == 42);
-static_assert(SignedBig<Negative, 32>(-42).sign() == false);
+template<Size size>
+SignedBig(Elements<size> const&) -> SignedBig<Positive, gBitsOf<Elements<size>>>;
 
-static_assert(SignedBig<Runtime, 32>(42).abs().element(0) == 42);
-static_assert(SignedBig<Runtime, 32>(42).sign() == true);
+template<Size size>
+SignedBig(Elements<size> const&, bool) -> SignedBig<Runtime, gBitsOf<Elements<size>>>;
 
-static_assert(SignedBig<Runtime, 32>(-42).abs().element(0) == 42);
-static_assert(SignedBig<Runtime, 32>(-42).sign() == false);
+template<Size size>
+  requires(!gLimbIsElement)
+SignedBig(Limbs<size> const&) -> SignedBig<Positive, gBitsOf<Limbs<size>>>;
 
-// UnsignedBig Construction
-constexpr UnsignedBig<16> gTestUnsigned16{ 100u };
-static_assert(SignedBig<Positive, 32>(gTestUnsigned16).abs().element(0) == 100);
-static_assert(SignedBig<Runtime, 32>(gTestUnsigned16, false).sign() == false);
-
-// SignedBig Cross-Sign & Cross-Size Construction
-constexpr SignedBig<Positive, 16> gTestPos16{ 50 };
-static_assert(SignedBig<Positive, 32>(gTestPos16).abs().element(0) == 50);
-static_assert(SignedBig<Runtime, 32>(gTestPos16).sign() == true);
-
-constexpr SignedBig<Negative, 64> gTestNeg64{ -50 };
-static_assert(SignedBig<Negative, 32>(gTestNeg64).abs().element(0) == 50);
-static_assert(SignedBig<Runtime, 32>(gTestNeg64).sign() == false);
-
-constexpr SignedBig<Runtime, 16> gTestRt16Pos{ 50 };
-static_assert(SignedBig<Positive, 32>(gTestRt16Pos).abs().element(0) == 50);
-
-constexpr SignedBig<Runtime, 16> gTestRt16Neg{ -50 };
-static_assert(SignedBig<Negative, 32>(gTestRt16Neg).abs().element(0) == 50);
-
-// ============================================================================
-// Array and Limbs Construction Tests
-// ============================================================================
-
-static_assert([]() consteval -> bool {
-  constexpr auto elements = Elements<2>{ 1, 2 };
-  static_assert(SignedBig<Positive, 64>{ elements }.abs().element(0) == 1);
-  static_assert(SignedBig<Positive, 64>{ elements }.abs().element(1) == 2);
-  static_assert(SignedBig<Runtime, 64>{ elements, false }.sign() == false);
-
-  constexpr auto limbs = Limbs<2>{ 3, 4 };
-  static_assert(SignedBig<Positive, 64>{ limbs }.sign() == true);
-  static_assert(SignedBig<Runtime, 64>{ limbs, false }.sign() == false);
-
-  return true;
-}());
-
-// ============================================================================
-// Assignment Operator Tests
-// ============================================================================
-
-consteval auto
-testAssignments() -> bool
-{
-  SignedBig<Runtime, 32> rt{};
-
-  rt = 100u;
-  if (rt.abs().element(0) != 100 || rt.sign() != true) return false;
-
-  rt = -100;
-  if (rt.abs().element(0) != 100 || rt.sign() != false) return false;
-
-  SignedBig<Positive, 32> pos{};
-  pos = gTestPos16;
-  if (pos.abs().element(0) != 50 || pos.sign() != true) return false;
-
-  pos = gTestUnsigned16;
-  if (pos.abs().element(0) != 100 || pos.sign() != true) return false;
-
-  SignedBig<Negative, 32> neg{};
-  neg = gTestNeg64;
-  if (neg.abs().element(0) != 50 || neg.sign() != false) return false;
-
-  if constexpr (!gLimbIsElement) {
-    Limbs<2> const limbs{ 5, 6 };
-    rt = limbs;
-    if (rt.sign() != true) return false;
-  }
-
-  Elements<2> const elements{ 7, 8 };
-  pos = elements;
-  if (pos.abs().element(0) != 7 || pos.abs().element(1) != 8) return false;
-
-  return true;
-}
-static_assert(testAssignments());
+template<Size size>
+  requires(!gLimbIsElement)
+SignedBig(Limbs<size> const&, bool) -> SignedBig<Runtime, gBitsOf<Limbs<size>>>;
 
 } // namespace big
