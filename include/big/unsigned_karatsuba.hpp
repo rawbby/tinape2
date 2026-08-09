@@ -13,13 +13,9 @@ template<Size n>
 constexpr auto gScratchSize = (n * 4) + 64;
 
 // res[0..na+nb) = a[0..na) * b[0..nb), schoolbook
-template<Size na,
-         Size nb>
+template<Size na, Size nb>
 constexpr void
-mulSchool(
-  Element const* __restrict a,
-  Element const* __restrict b,
-  Element* __restrict res)
+mulSchool(Element const* __restrict a, Element const* __restrict b, Element* __restrict res)
 {
   for (Size i = 0; i < na + nb; ++i) {
     res[i] = 0;
@@ -36,13 +32,9 @@ mulSchool(
 }
 
 // res[shift..len) += src[0..srcLen), carry clamped at len
-template<Size len,
-         Size shift,
-         Size srcLen>
+template<Size len, Size shift, Size srcLen>
 constexpr void
-addAt(
-  Element* __restrict res,
-  Element const* __restrict src)
+addAt(Element* __restrict res, Element const* __restrict src)
 {
   auto carry = Wide{ 0 };
   auto i     = Size{ 0 };
@@ -59,12 +51,9 @@ addAt(
 }
 
 // res[0..len) -= src[0..srcLen), never underflows for karatsuba middle term
-template<Size len,
-         Size srcLen>
+template<Size len, Size srcLen>
 constexpr void
-subAt(
-  Element* __restrict res,
-  Element const* __restrict src)
+subAt(Element* __restrict res, Element const* __restrict src)
 {
   auto borrow = Wide{ 0 };
   auto i      = Size{ 0 };
@@ -81,13 +70,9 @@ subAt(
 }
 
 // out[0..na+1) = a[0..na) + b[0..nb), requires nb <= na
-template<Size na,
-         Size nb>
+template<Size na, Size nb>
 constexpr void
-addFull(
-  Element const* a,
-  Element const* b,
-  Element* __restrict out)
+addFull(Element const* a, Element const* b, Element* __restrict out)
 {
   auto carry = Wide{ 0 };
   auto i     = Size{ 0 };
@@ -105,14 +90,9 @@ addFull(
 }
 
 // res[0..na+nb) = a[0..na) * b[0..nb); scratch provided once by the caller
-template<Size na,
-         Size nb>
+template<Size na, Size nb>
 constexpr void
-mulRec(
-  Element const* __restrict a,
-  Element const* __restrict b,
-  Element* __restrict res,
-  Element* __restrict scratch)
+mulRec(Element const* __restrict a, Element const* __restrict b, Element* __restrict res, Element* __restrict scratch)
 {
   if constexpr (na < nb) { // keep the longer operand in a
     mulRec<nb, na>(b, a, res, scratch);

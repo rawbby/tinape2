@@ -9,13 +9,9 @@ namespace big {
 
 // truncation based cast without extensive
 // runtime checking but simple (exact) masking
-template<IsSignedBig ToSignedBig,
-         SignType    fromSignType,
-         Size        fromBits>
+template<IsSignedBig ToSignedBig, SignType fromSignType, Size fromBits>
 [[nodiscard]] constexpr auto
-castBigUnsafe(
-  GenericSigned<fromSignType,
-                fromBits> const& fromValue) -> ToSignedBig
+castBigUnsafe(GenericSigned<fromSignType, fromBits> const& fromValue) -> ToSignedBig
 {
   if constexpr (SignType::Runtime == ToSignedBig::gSignType) {
     return {
@@ -33,13 +29,9 @@ castBigUnsafe(
 
 // safe casting returns a valid value if fromValue
 // fits toValue or std::nullopt
-template<IsSignedBig ToSignedBig,
-         SignType    fromSignType,
-         Size        fromBits>
+template<IsSignedBig ToSignedBig, SignType fromSignType, Size fromBits>
 [[nodiscard]] constexpr auto
-castBigSafe(
-  GenericSigned<fromSignType,
-                fromBits> const& fromValue) -> std::optional<ToSignedBig>
+castBigSafe(GenericSigned<fromSignType, fromBits> const& fromValue) -> std::optional<ToSignedBig>
 {
   using ToUnsigned          = ToSignedBig::UnsignedBig;
   constexpr auto toSignType = ToSignedBig::gSignType;

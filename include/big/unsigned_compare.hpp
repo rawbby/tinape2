@@ -8,12 +8,9 @@
 
 namespace big {
 
-template<IsUnsignedBig Lhs,
-         IsUnsignedBig Rhs>
+template<IsUnsignedBig Lhs, IsUnsignedBig Rhs>
 constexpr auto
-operator<=>(
-  Lhs const& lhs,
-  Rhs const& rhs) -> std::strong_ordering
+operator<=>(Lhs const& lhs, Rhs const& rhs) -> std::strong_ordering
 {
   constexpr auto max = std::max(Lhs::gNumElements, Rhs::gNumElements);
   constexpr auto min = std::min(Lhs::gNumElements, Rhs::gNumElements);
@@ -51,12 +48,9 @@ operator<=>(
   return std::strong_ordering::equal;
 }
 
-template<IsUnsignedBig Lhs,
-         IsUnsignedBig Rhs>
+template<IsUnsignedBig Lhs, IsUnsignedBig Rhs>
 constexpr auto
-operator==(
-  Lhs const& lhs,
-  Rhs const& rhs) -> bool
+operator==(Lhs const& lhs, Rhs const& rhs) -> bool
 {
   constexpr auto max = std::max(Lhs::gNumElements, Rhs::gNumElements);
   constexpr auto min = std::min(Lhs::gNumElements, Rhs::gNumElements);

@@ -33,8 +33,7 @@ struct RefValueNode
 
   Value const* mValue;
 
-  constexpr explicit RefValueNode(
-    Value const* value)
+  constexpr explicit RefValueNode(Value const* value)
     : mValue(value)
   {
   }
@@ -59,8 +58,7 @@ struct ValueNode
 
   Value mValue;
 
-  constexpr explicit ValueNode(
-    Value value)
+  constexpr explicit ValueNode(Value value)
     : mValue(std::move(value))
   {
   }
@@ -86,9 +84,7 @@ struct AdditionNode
   Lhs mLhs;
   Rhs mRhs;
 
-  constexpr AdditionNode(
-    Lhs const& lhs,
-    Rhs const& rhs)
+  constexpr AdditionNode(Lhs const& lhs, Rhs const& rhs)
     : mLhs(lhs)
     , mRhs(rhs)
   {
@@ -115,9 +111,7 @@ struct SubtractionNode
   Lhs mLhs;
   Rhs mRhs;
 
-  constexpr SubtractionNode(
-    Lhs const& lhs,
-    Rhs const& rhs)
+  constexpr SubtractionNode(Lhs const& lhs, Rhs const& rhs)
     : mLhs(lhs)
     , mRhs(rhs)
   {
@@ -144,9 +138,7 @@ struct MultiplicationNode
   Lhs mLhs;
   Rhs mRhs;
 
-  constexpr MultiplicationNode(
-    Lhs const& lhs,
-    Rhs const& rhs)
+  constexpr MultiplicationNode(Lhs const& lhs, Rhs const& rhs)
     : mLhs(lhs)
     , mRhs(rhs)
   {
@@ -177,16 +169,13 @@ struct RationalExpression
   NumeratorNode   mNumerator;
   DenominatorNode mDenominator;
 
-  constexpr RationalExpression(
-    NumeratorNode const&   numerator,
-    DenominatorNode const& denominator)
+  constexpr RationalExpression(NumeratorNode const& numerator, DenominatorNode const& denominator)
     : mNumerator(numerator)
     , mDenominator(denominator)
   {
   }
   // NOLINTBEGIN(*-explicit-conversions)
-  constexpr RationalExpression(
-    NumeratorNode const& numerator)
+  constexpr RationalExpression(NumeratorNode const& numerator)
     : mNumerator(numerator)
     , mDenominator(OneNode{})
   {
@@ -205,9 +194,7 @@ template<typename T>
 concept Expression = Node<T> || SpecializationOf<T, RationalExpression>;
 
 constexpr auto
-operator+(
-  Node auto const& lhs,
-  Node auto const& rhs)
+operator+(Node auto const& lhs, Node auto const& rhs)
 {
   static_assert(!std::same_as<OneNode, std::remove_cvref_t<decltype(lhs)>>);
   static_assert(!std::same_as<OneNode, std::remove_cvref_t<decltype(rhs)>>);
@@ -215,9 +202,7 @@ operator+(
 }
 
 constexpr auto
-operator-(
-  Node auto const& lhs,
-  Node auto const& rhs)
+operator-(Node auto const& lhs, Node auto const& rhs)
 {
   static_assert(!std::same_as<OneNode, std::remove_cvref_t<decltype(lhs)>>);
   static_assert(!std::same_as<OneNode, std::remove_cvref_t<decltype(rhs)>>);
@@ -225,9 +210,7 @@ operator-(
 }
 
 constexpr auto
-operator*(
-  Node auto const& lhs,
-  Node auto const& rhs)
+operator*(Node auto const& lhs, Node auto const& rhs)
 {
   if constexpr (std::same_as<OneNode, decltype(lhs)>) {
     return rhs;
@@ -239,18 +222,14 @@ operator*(
 }
 
 constexpr auto
-operator/(
-  Node auto const& lhs,
-  Node auto const& rhs)
+operator/(Node auto const& lhs, Node auto const& rhs)
 {
   static_assert(!std::same_as<OneNode, std::remove_cvref_t<decltype(lhs)>>);
   return RationalExpression{ lhs, rhs };
 }
 
 constexpr auto
-operator*(
-  Expression auto const& lhs,
-  Expression auto const& rhs)
+operator*(Expression auto const& lhs, Expression auto const& rhs)
 {
   auto const rationalLhs = RationalExpression{ lhs };
   auto const rationalRhs = RationalExpression{ rhs };
@@ -261,9 +240,7 @@ operator*(
 }
 
 constexpr auto
-operator/(
-  Expression auto const& lhs,
-  Expression auto const& rhs)
+operator/(Expression auto const& lhs, Expression auto const& rhs)
 {
   auto const rationalLhs = RationalExpression{ lhs };
   auto const rationalRhs = RationalExpression{ rhs };
@@ -274,9 +251,7 @@ operator/(
 }
 
 constexpr auto
-operator+(
-  Expression auto const& lhs,
-  Expression auto const& rhs)
+operator+(Expression auto const& lhs, Expression auto const& rhs)
 {
   auto const rationalLhs = RationalExpression{ lhs };
   auto const rationalRhs = RationalExpression{ rhs };
@@ -287,9 +262,7 @@ operator+(
 }
 
 constexpr auto
-operator-(
-  Expression auto const& lhs,
-  Expression auto const& rhs)
+operator-(Expression auto const& lhs, Expression auto const& rhs)
 {
   auto const rationalLhs = RationalExpression{ lhs };
   auto const rationalRhs = RationalExpression{ rhs };
@@ -300,8 +273,7 @@ operator-(
 }
 
 [[nodiscard]] constexpr bool
-isNegative(
-  Node auto const& node)
+isNegative(Node auto const& node)
 {
   if constexpr (std::same_as<OneNode, std::remove_cvref_t<decltype(node)>>) {
     return false;
@@ -312,10 +284,7 @@ isNegative(
 }
 
 constexpr auto
-applyCompare(
-  auto const&            compare,
-  Expression auto const& lhs,
-  Expression auto const& rhs)
+applyCompare(auto const& compare, Expression auto const& lhs, Expression auto const& rhs)
 {
   auto const rationalLhs = RationalExpression{ lhs };
   auto const rationalRhs = RationalExpression{ rhs };
@@ -334,16 +303,14 @@ applyCompare(
 
 template<typename Value>
 constexpr auto
-val(
-  Value const* value)
+val(Value const* value)
 {
   return ast::RefValueNode<Value>{ value };
 }
 
 template<typename Value>
 constexpr auto
-val(
-  Value value)
+val(Value value)
 {
   return ast::ValueNode<Value>{ std::move(value) };
 }
@@ -356,63 +323,49 @@ using ast::operator/;
 // NOLINTEND(*-unused-using-decls)
 
 constexpr bool
-operator==(
-  auto const& lhs,
-  auto const& rhs)
+operator==(auto const& lhs, auto const& rhs)
 {
   constexpr auto compare = [](auto const& lhsEvaluated, auto const& rhsEvaluated) { return lhsEvaluated == rhsEvaluated; };
   return ast::applyCompare(compare, lhs, rhs);
 }
 
 constexpr bool
-operator!=(
-  auto const& lhs,
-  auto const& rhs)
+operator!=(auto const& lhs, auto const& rhs)
 {
   constexpr auto compare = [](auto const& lhsEvaluated, auto const& rhsEvaluated) { return lhsEvaluated != rhsEvaluated; };
   return ast::applyCompare(compare, lhs, rhs);
 }
 
 constexpr bool
-operator<(
-  auto const& lhs,
-  auto const& rhs)
+operator<(auto const& lhs, auto const& rhs)
 {
   constexpr auto compare = [](auto const& lhsEvaluated, auto const& rhsEvaluated) { return lhsEvaluated < rhsEvaluated; };
   return ast::applyCompare(compare, lhs, rhs);
 }
 
 constexpr bool
-operator>(
-  auto const& lhs,
-  auto const& rhs)
+operator>(auto const& lhs, auto const& rhs)
 {
   constexpr auto compare = [](auto const& lhsEvaluated, auto const& rhsEvaluated) { return lhsEvaluated > rhsEvaluated; };
   return ast::applyCompare(compare, lhs, rhs);
 }
 
 constexpr bool
-operator<=(
-  auto const& lhs,
-  auto const& rhs)
+operator<=(auto const& lhs, auto const& rhs)
 {
   constexpr auto compare = [](auto const& lhsEvaluated, auto const& rhsEvaluated) { return lhsEvaluated <= rhsEvaluated; };
   return ast::applyCompare(compare, lhs, rhs);
 }
 
 constexpr bool
-operator>=(
-  auto const& lhs,
-  auto const& rhs)
+operator>=(auto const& lhs, auto const& rhs)
 {
   constexpr auto compare = [](auto const& lhsEvaluated, auto const& rhsEvaluated) { return lhsEvaluated >= rhsEvaluated; };
   return ast::applyCompare(compare, lhs, rhs);
 }
 
 constexpr auto
-operator<=>(
-  auto const& lhs,
-  auto const& rhs)
+operator<=>(auto const& lhs, auto const& rhs)
 {
   constexpr auto compare = [](auto const& lhsEvaluated, auto const& rhsEvaluated) { return lhsEvaluated <=> rhsEvaluated; };
   return ast::applyCompare(compare, lhs, rhs);

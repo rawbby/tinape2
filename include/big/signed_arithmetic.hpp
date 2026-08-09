@@ -6,12 +6,9 @@
 
 namespace big {
 
-template<SignType signType,
-         Size     bits>
+template<SignType signType, Size bits>
 constexpr auto
-operator-(
-  GenericSigned<signType,
-                bits> const& value)
+operator-(GenericSigned<signType, bits> const& value)
 {
   if constexpr (SignType::Positive == signType) {
     return GenericSigned<SignType::Negative, bits>{ value.abs() };
@@ -22,16 +19,9 @@ operator-(
   }
 }
 
-template<SignType lhsSignType,
-         Size     lhsBits,
-         SignType rhsSignType,
-         Size     rhsBits>
+template<SignType lhsSignType, Size lhsBits, SignType rhsSignType, Size rhsBits>
 constexpr auto
-operator+(
-  GenericSigned<lhsSignType,
-                lhsBits> const& lhs,
-  GenericSigned<rhsSignType,
-                rhsBits> const& rhs)
+operator+(GenericSigned<lhsSignType, lhsBits> const& lhs, GenericSigned<rhsSignType, rhsBits> const& rhs)
 {
   // if compile time sign equality
   if constexpr (SignType::Runtime != lhsSignType && lhsSignType == rhsSignType) {
@@ -65,16 +55,9 @@ operator+(
   }
 }
 
-template<SignType lhsSignType,
-         Size     lhsBits,
-         SignType rhsSignType,
-         Size     rhsBits>
+template<SignType lhsSignType, Size lhsBits, SignType rhsSignType, Size rhsBits>
 constexpr auto
-operator-(
-  GenericSigned<lhsSignType,
-                lhsBits> const& lhs,
-  GenericSigned<rhsSignType,
-                rhsBits> const& rhs)
+operator-(GenericSigned<lhsSignType, lhsBits> const& lhs, GenericSigned<rhsSignType, rhsBits> const& rhs)
 {
   // if compile time sign inequality
   if constexpr (SignType::Runtime != lhsSignType && SignType::Runtime != rhsSignType && lhsSignType != rhsSignType) {
@@ -108,16 +91,9 @@ operator-(
   }
 }
 
-template<SignType lhsSignType,
-         Size     lhsBits,
-         SignType rhsSignType,
-         Size     rhsBits>
+template<SignType lhsSignType, Size lhsBits, SignType rhsSignType, Size rhsBits>
 constexpr auto
-operator*(
-  GenericSigned<lhsSignType,
-                lhsBits> const& lhs,
-  GenericSigned<rhsSignType,
-                rhsBits> const& rhs)
+operator*(GenericSigned<lhsSignType, lhsBits> const& lhs, GenericSigned<rhsSignType, rhsBits> const& rhs)
 {
   if constexpr (SignType::Runtime == lhsSignType || SignType::Runtime == rhsSignType) {
     return GenericSigned{ SignType::Runtime, lhs.abs() * rhs.abs(), lhs.sign() == rhs.sign() };

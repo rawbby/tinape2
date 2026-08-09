@@ -3,16 +3,14 @@
 #include <common/int.hpp>
 
 [[nodiscard]] constexpr auto
-loHalf(
-  IsUnsignedIntegral auto value)
+loHalf(IsUnsignedIntegral auto value)
 {
   constexpr auto halfBits = gBitsOf<decltype(value)> / 2;
   return static_cast<U<halfBits>>(value);
 }
 
 [[nodiscard]] constexpr auto
-hiHalf(
-  IsUnsignedIntegral auto value)
+hiHalf(IsUnsignedIntegral auto value)
 {
   constexpr auto halfBits = gBitsOf<decltype(value)> / 2;
   return static_cast<U<halfBits>>(value >> halfBits);
@@ -23,8 +21,7 @@ constexpr auto gMask = static_cast<T>(-1);
 
 template<IsUnsignedIntegral T>
 [[nodiscard]] constexpr auto
-loMask(
-  Size bits) -> T
+loMask(Size bits) -> T
 {
   if (bits >= gBitsOf<T>) {
     return gMask<T>;
@@ -34,8 +31,7 @@ loMask(
 
 template<IsUnsignedIntegral T>
 [[nodiscard]] constexpr auto
-hiMask(
-  Size bits) -> T
+hiMask(Size bits) -> T
 {
   if (bits >= gBitsOf<T>) {
     return gMask<T>;

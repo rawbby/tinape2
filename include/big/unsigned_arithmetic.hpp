@@ -11,12 +11,9 @@
 
 namespace big {
 
-template<Size lhsBits,
-         Size rhsBits>
+template<Size lhsBits, Size rhsBits>
 constexpr auto
-operator+(
-  UnsignedBig<lhsBits> const& lhs,
-  UnsignedBig<rhsBits> const& rhs)
+operator+(UnsignedBig<lhsBits> const& lhs, UnsignedBig<rhsBits> const& rhs)
 {
   // ensure bigger num gets swapped into lhs
   if constexpr (rhsBits > lhsBits) {
@@ -63,12 +60,9 @@ operator+(
   }
 }
 
-template<Size lhsBits,
-         Size rhsBits>
+template<Size lhsBits, Size rhsBits>
 constexpr auto
-operator-(
-  UnsignedBig<lhsBits> const& lhs,
-  UnsignedBig<rhsBits> const& rhs)
+operator-(UnsignedBig<lhsBits> const& lhs, UnsignedBig<rhsBits> const& rhs)
 {
   if (std::is_constant_evaluated()) {
     if (rhs > lhs) {
@@ -112,12 +106,9 @@ operator-(
   }
 }
 
-template<Size lhsBits,
-         Size rhsBits>
+template<Size lhsBits, Size rhsBits>
 constexpr auto
-operator*(
-  UnsignedBig<lhsBits> const& lhs,
-  UnsignedBig<rhsBits> const& rhs)
+operator*(UnsignedBig<lhsBits> const& lhs, UnsignedBig<rhsBits> const& rhs)
 {
   constexpr auto resBits = lhsBits == 0 || rhsBits == 0 ? 0 : (lhsBits == 1 ? 0 : lhsBits) + (rhsBits == 1 ? 0 : rhsBits);
   using ResType          = UnsignedBig<resBits>;

@@ -12,11 +12,9 @@ namespace big {
 
 // truncation based cast without extensive
 // runtime checking but simple (exact) masking
-template<IsUnsignedBig ToUnsignedBig,
-         IsUnsignedBig FromUnsignedBig>
+template<IsUnsignedBig ToUnsignedBig, IsUnsignedBig FromUnsignedBig>
 [[nodiscard]] constexpr auto
-castBigUnsafe(
-  FromUnsignedBig const& value) -> ToUnsignedBig
+castBigUnsafe(FromUnsignedBig const& value) -> ToUnsignedBig
 {
   if (FromUnsignedBig::gNumElements == 0 || ToUnsignedBig::gNumElements == 0) {
     return ToUnsignedBig{};
@@ -36,11 +34,9 @@ castBigUnsafe(
 
 // safe casting returns a valid value if fromValue
 // fits toValue or std::nullopt
-template<IsUnsignedBig ToUnsignedBig,
-         IsUnsignedBig FromUnsignedBig>
+template<IsUnsignedBig ToUnsignedBig, IsUnsignedBig FromUnsignedBig>
 [[nodiscard]] constexpr auto
-castBigSafe(
-  FromUnsignedBig const& value) -> std::optional<ToUnsignedBig>
+castBigSafe(FromUnsignedBig const& value) -> std::optional<ToUnsignedBig>
 {
   if (ToUnsignedBig::gBits >= FromUnsignedBig::gBits) {
     return castBigUnsafe<ToUnsignedBig>(value);

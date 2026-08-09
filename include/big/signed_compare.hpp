@@ -9,12 +9,9 @@
 
 namespace big {
 
-template<IsSignedBig Lhs,
-         IsSignedBig Rhs>
+template<IsSignedBig Lhs, IsSignedBig Rhs>
 constexpr auto
-operator<=>(
-  Lhs const& lhs,
-  Rhs const& rhs) -> std::strong_ordering
+operator<=>(Lhs const& lhs, Rhs const& rhs) -> std::strong_ordering
 {
   constexpr auto zero = UnsignedBig<1>{};
 
@@ -41,16 +38,9 @@ operator<=>(
 }
 
 // !=, <, >, <=, >= are derived from <=> and == by operator rewriting
-template<SignType lhsSignType,
-         Size     lhsBits,
-         SignType rhsSignType,
-         Size     rhsBits>
+template<SignType lhsSignType, Size lhsBits, SignType rhsSignType, Size rhsBits>
 constexpr auto
-operator==(
-  GenericSigned<lhsSignType,
-                lhsBits> const& lhs,
-  GenericSigned<rhsSignType,
-                rhsBits> const& rhs) -> bool
+operator==(GenericSigned<lhsSignType, lhsBits> const& lhs, GenericSigned<rhsSignType, rhsBits> const& rhs) -> bool
 {
   return std::is_eq(lhs <=> rhs);
 }

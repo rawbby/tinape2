@@ -6,6 +6,8 @@
 #include <big/unsigned_cast.hpp>       // big::castBigSafe, big::castBigUnsafe
 #include <big/unsigned_compare.hpp>    // operator<=>, operator==
 
+#include <big/restricted.hpp>
+
 #include <array>       // std::array
 #include <type_traits> // std::is_same_v, std::is_constructible_v
 

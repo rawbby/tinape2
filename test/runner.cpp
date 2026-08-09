@@ -11,8 +11,7 @@ namespace {
 class ViewBuf : public std::streambuf
 {
 public:
-  explicit ViewBuf(
-    std::string_view data)
+  explicit ViewBuf(std::string_view data)
   {
     // NOLINTBEGIN(*-type-const-cast,*-bounds-pointer-arithmetic)
     auto* begin = const_cast<char*>(data.data());
@@ -27,9 +26,7 @@ class RdbufGuard
   std::streambuf* mOld;
 
 public:
-  RdbufGuard(
-    std::ios*       stream,
-    std::streambuf* buffer)
+  RdbufGuard(std::ios* stream, std::streambuf* buffer)
     : mStream{ stream }
     , mOld{ stream->rdbuf(buffer) }
   {
@@ -52,8 +49,7 @@ public:
   std::string mData;
 
 protected:
-  auto overflow(
-    int_type symbol) -> int_type override
+  auto overflow(int_type symbol) -> int_type override
   {
     if (!traits_type::eq_int_type(symbol, traits_type::eof())) {
       mData.push_back(traits_type::to_char_type(symbol));
@@ -61,9 +57,7 @@ protected:
     return symbol;
   }
 
-  auto xsputn(
-    char const*     rawString,
-    std::streamsize rawStringSize) -> std::streamsize override
+  auto xsputn(char const* rawString, std::streamsize rawStringSize) -> std::streamsize override
   {
     mData.append(rawString, static_cast<std::size_t>(rawStringSize));
     return rawStringSize;
