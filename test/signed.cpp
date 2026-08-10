@@ -1,6 +1,5 @@
+#include <common.hpp>
 #include <signed.hpp>
-
-#include <common/int.hpp>
 
 #include <cstdlib>
 #include <exception>
