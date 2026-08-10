@@ -1,12 +1,13 @@
 #pragma once
 
-#include <big/common.hpp>               // big::BigElement, big::gBigElementBits
-#include <big/unsigned.hpp>             // big::UnsignedBig
-#include <big/unsigned_type_traits.hpp> // big::IsUnsignedBig
+// IWYU pragma: private, include <unsigned.hpp>
 
-#include <algorithm> // std::min
-#include <cstddef>   // std::size_t
-#include <optional>  // std::optional
+#include <unsigned/forward.hpp>
+
+#include <common/int.hpp>
+
+#include <algorithm>
+#include <optional>
 
 namespace big {
 

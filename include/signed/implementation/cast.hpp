@@ -1,9 +1,10 @@
 #pragma once
 
-#include <big/common.hpp>             // big::SignType
-#include <big/signed_type_traits.hpp> // big::IsSignedBig
-#include <big/unsigned_cast.hpp>      // big::castBigUnsafe
-#include <optional>                   // std::optional
+// IWYU pragma: private, include <signed.hpp>
+
+#include <common.hpp>
+
+#include <optional>
 
 namespace big {
 
@@ -11,27 +12,19 @@ namespace big {
 // runtime checking but simple (exact) masking
 template<IsSignedBig ToSignedBig, SignType fromSignType, Size fromBits>
 [[nodiscard]] constexpr auto
-castBigUnsafe(GenericSigned<fromSignType, fromBits> const& fromValue) -> ToSignedBig
+castBigUnsafe(SignedBig<fromSignType, fromBits> const& fromValue) -> ToSignedBig
 {
-  if constexpr (SignType::Runtime == ToSignedBig::gSignType) {
-    return {
-      castBigUnsafe<ToSignedBig::UnsignedBig>(fromValue.abs()),
-      fromValue.sign(),
-    };
-
-  } else {
-    return {
-      castBigUnsafe<ToSignedBig::UnsignedBig>(fromValue.abs()),
-      SignType::Positive == ToSignedBig::gSignType,
-    };
-  }
+  return {
+    castBigUnsafe<ToSignedBig::UnsignedBig>(fromValue.abs()),
+    fromValue.sign(),
+  };
 }
 
 // safe casting returns a valid value if fromValue
 // fits toValue or std::nullopt
 template<IsSignedBig ToSignedBig, SignType fromSignType, Size fromBits>
 [[nodiscard]] constexpr auto
-castBigSafe(GenericSigned<fromSignType, fromBits> const& fromValue) -> std::optional<ToSignedBig>
+castBigSafe(SignedBig<fromSignType, fromBits> const& fromValue) -> std::optional<ToSignedBig>
 {
   using ToUnsigned          = ToSignedBig::UnsignedBig;
   constexpr auto toSignType = ToSignedBig::gSignType;

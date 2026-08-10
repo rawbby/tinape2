@@ -1,8 +1,4 @@
-#include <big/common.hpp>
-#include <big/unsigned.hpp>
-#include <big/unsigned_arithmetic.hpp>
-#include <big/unsigned_compare.hpp>
-#include <big/unsigned_constant.hpp>
+#include <unsigned.hpp>
 
 #include <common/int.hpp>
 

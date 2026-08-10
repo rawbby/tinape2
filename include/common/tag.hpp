@@ -1,5 +1,7 @@
 #pragma once
 
+// IWYU pragma: private, include <common.hpp>
+
 // Tag / gTag Idiom
 //
 // What:

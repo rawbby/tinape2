@@ -1,12 +1,7 @@
-#include <big/common.hpp>
-#include <big/signed.hpp>
-#include <big/signed_arithmetic.hpp>
-#include <big/signed_compare.hpp>
-#include <big/signed_constant.hpp>
+#include <signed.hpp>
 
 #include <common/int.hpp>
 
-#include <array>
 #include <cstdlib>
 #include <exception>
 

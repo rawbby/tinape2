@@ -1,5 +1,7 @@
 #pragma once
 
+// IWYU pragma: private, include <common.hpp>
+
 #include <common/int.hpp>
 
 [[nodiscard]] constexpr auto

@@ -1,9 +1,14 @@
 #pragma once
 
-#include <big/common.hpp>
-#include <big/signed.hpp>
-#include <big/signed_compare.hpp>
-#include <big/unsigned_constant.hpp>
+// IWYU pragma: private, include <signed.hpp>
+
+#include <signed/declaration.hpp>
+#include <signed/forward.hpp>
+
+#include <common.hpp>
+#include <unsigned.hpp>
+
+#include <array>
 
 namespace big {
 
@@ -37,16 +42,16 @@ constexpr auto gSignedBig = [] {
   };
 
   if constexpr (Base::gIsIntData && value < 0) {
-    return GenericSigned<SignType::Negative, neededUintBits(base.abs().mData)>{ base.abs().mData };
+    return SignedBig<SignType::Negative, neededUintBits(base.abs().mData)>{ base.abs().mData };
 
   } else if constexpr (Base::gIsIntData && value >= 0) {
-    return GenericSigned<SignType::Positive, neededUintBits(base.abs().mData)>{ base.abs().mData };
+    return SignedBig<SignType::Positive, neededUintBits(base.abs().mData)>{ base.abs().mData };
 
   } else if constexpr (Base::gIsArrayData && value < 0) {
-    return GenericSigned<SignType::Negative, neededArrayBits(base.abs().mData)>{ base.abs().mData };
+    return SignedBig<SignType::Negative, neededArrayBits(base.abs().mData)>{ base.abs().mData };
 
   } else if constexpr (Base::gIsArrayData && value >= 0) {
-    return GenericSigned<SignType::Positive, neededArrayBits(base.abs().mData)>{ base.abs().mData };
+    return SignedBig<SignType::Positive, neededArrayBits(base.abs().mData)>{ base.abs().mData };
 
   } else {
     static_assert(Base::gIsZeroData);

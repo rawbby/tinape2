@@ -1,13 +1,18 @@
 #pragma once
 
-#include <big/common.hpp>               // big::BigElement, big::BigWide, big::gBigElementBits, big::loBigElement, big::hiBigElement
-#include <big/unsigned.hpp>             // big::UnsignedBig
-#include <big/unsigned_karatsuba.hpp>   // big::karatsuba::gScratchSize, big::karatsuba::mulRec
-#include <big/unsigned_type_traits.hpp> // big::IsUnsignedBig
+// IWYU pragma: private, include <unsigned.hpp>
 
-#include <algorithm> // std::max, std::min
-#include <array>     // std::array
-#include <stdexcept> // std::invalid_argument
+#include <unsigned/declaration.hpp>
+#include <unsigned/forward.hpp>
+#include <unsigned/implementation/karatsuba.hpp>
+
+#include <common/int.hpp>
+#include <common/mask.hpp>
+
+#include <algorithm>
+#include <array>
+#include <stdexcept>
+#include <type_traits>
 
 namespace big {
 
@@ -150,30 +155,52 @@ operator*(UnsignedBig<lhsBits> const& lhs, UnsignedBig<rhsBits> const& rhs)
   }
 }
 
-// NOLINTBEGIN(*-macro-usage)
-// clang-format off
-#ifdef BIG_MAKE_WRAPPER
-#error "BIG_MAKE_WRAPPER is already defined"
-#endif
-#define BIG_MAKE_WRAPPER(OP)                                                     \
-  template<typename Rhs>                                                         \
-    requires(!IsUnsignedBig<Rhs>) && requires(Rhs const& rhs){UnsignedBig{rhs};} \
-  constexpr auto operator OP(IsUnsignedBig auto const& lhs, Rhs const& rhs)      \
-  {                                                                              \
-    return lhs OP UnsignedBig{ rhs };                                            \
-  }                                                                              \
-                                                                                 \
-  template<typename Lhs>                                                         \
-    requires(!IsUnsignedBig<Lhs>) && requires(Lhs const& lhs){UnsignedBig{lhs};} \
-  constexpr auto operator OP(Lhs const& lhs, IsUnsignedBig auto const& rhs)      \
-  {                                                                              \
-    return UnsignedBig{ lhs } OP rhs;                                            \
-  }
-BIG_MAKE_WRAPPER(+)
-BIG_MAKE_WRAPPER(-)
-BIG_MAKE_WRAPPER(*)
-#undef BIG_MAKE_WRAPPER
-// clang-format on
-// NOLINTEND(*-macro-usage)
+template<typename Rhs>
+  requires(!IsUnsignedBig<Rhs>) && requires(Rhs const& rhs) { UnsignedBig{ rhs }; }
+constexpr auto
+operator+(IsUnsignedBig auto const& lhs, Rhs const& rhs)
+{
+  return lhs + UnsignedBig{ rhs };
+}
+
+template<typename Lhs>
+  requires(!IsUnsignedBig<Lhs>) && requires(Lhs const& lhs) { UnsignedBig{ lhs }; }
+constexpr auto
+operator+(Lhs const& lhs, IsUnsignedBig auto const& rhs)
+{
+  return UnsignedBig{ lhs } + rhs;
+}
+
+template<typename Rhs>
+  requires(!IsUnsignedBig<Rhs>) && requires(Rhs const& rhs) { UnsignedBig{ rhs }; }
+constexpr auto
+operator-(IsUnsignedBig auto const& lhs, Rhs const& rhs)
+{
+  return lhs - UnsignedBig{ rhs };
+}
+
+template<typename Lhs>
+  requires(!IsUnsignedBig<Lhs>) && requires(Lhs const& lhs) { UnsignedBig{ lhs }; }
+constexpr auto
+operator-(Lhs const& lhs, IsUnsignedBig auto const& rhs)
+{
+  return UnsignedBig{ lhs } - rhs;
+}
+
+template<typename Rhs>
+  requires(!IsUnsignedBig<Rhs>) && requires(Rhs const& rhs) { UnsignedBig{ rhs }; }
+constexpr auto
+operator*(IsUnsignedBig auto const& lhs, Rhs const& rhs)
+{
+  return lhs * UnsignedBig{ rhs };
+}
+
+template<typename Lhs>
+  requires(!IsUnsignedBig<Lhs>) && requires(Lhs const& lhs) { UnsignedBig{ lhs }; }
+constexpr auto
+operator*(Lhs const& lhs, IsUnsignedBig auto const& rhs)
+{
+  return UnsignedBig{ lhs } * rhs;
+}
 
 } // namespace big

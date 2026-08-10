@@ -1,9 +1,12 @@
 #pragma once
 
-#include <big/common.hpp> // big::BigElement, big::BigWide, big::gBigElementBits
+// IWYU pragma: private, include <unsigned.hpp>
 
-#include <algorithm> // std::max, std::min
-#include <cstddef>   // std::size_t
+#include <unsigned/forward.hpp>
+
+#include <common/int.hpp>
+
+#include <algorithm>
 
 namespace big::karatsuba {
 // NOLINTBEGIN(*-magic-numbers,*-identifier-length,*-pointer-arithmetic)

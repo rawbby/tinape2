@@ -1,36 +1,39 @@
 #pragma once
 
-#include <big/common.hpp>               // big::SignType
-#include <big/signed.hpp>               // big::SignedBig
-#include <big/unsigned_type_traits.hpp> // big::CommonUnsignedBig
+// IWYU pragma: private, include <signed.hpp>
+
+#include <signed/declaration.hpp>
+#include <signed/forward.hpp>
+
+#include <common.hpp>
 
 namespace big {
 
 template<SignType signType, Size bits>
 constexpr auto
-operator-(GenericSigned<signType, bits> const& value)
+operator-(SignedBig<signType, bits> const& value)
 {
   if constexpr (SignType::Positive == signType) {
-    return GenericSigned<SignType::Negative, bits>{ value.abs() };
+    return SignedBig<SignType::Negative, bits>{ value.abs() };
   } else if constexpr (SignType::Negative == signType) {
-    return GenericSigned<SignType::Positive, bits>{ value.abs() };
+    return SignedBig<SignType::Positive, bits>{ value.abs() };
   } else { // Positive == sign
-    return GenericSigned<SignType::Runtime, bits>{ value.abs(), !value.sign() };
+    return SignedBig<SignType::Runtime, bits>{ value.abs(), !value.sign() };
   }
 }
 
 template<SignType lhsSignType, Size lhsBits, SignType rhsSignType, Size rhsBits>
 constexpr auto
-operator+(GenericSigned<lhsSignType, lhsBits> const& lhs, GenericSigned<rhsSignType, rhsBits> const& rhs)
+operator+(SignedBig<lhsSignType, lhsBits> const& lhs, SignedBig<rhsSignType, rhsBits> const& rhs)
 {
   // if compile time sign equality
   if constexpr (SignType::Runtime != lhsSignType && lhsSignType == rhsSignType) {
-    return GenericSigned{ lhsSignType, lhs.abs() + rhs.abs() };
+    return SignedBig{ lhsSignType, lhs.abs() + rhs.abs() };
 
   } else { // all other cases require runtime evaluation
 
     // ensure compile time known return type that fits all return paths
-    using SignedBigT = GenericSigned<SignType::Runtime, decltype(lhs.abs() + rhs.abs())::gBits>;
+    using SignedBigT = SignedBig<SignType::Runtime, decltype(lhs.abs() + rhs.abs())::gBits>;
 
     // positive + positive || negative + negative
     if (lhs.sign() == rhs.sign()) {
@@ -57,16 +60,16 @@ operator+(GenericSigned<lhsSignType, lhsBits> const& lhs, GenericSigned<rhsSignT
 
 template<SignType lhsSignType, Size lhsBits, SignType rhsSignType, Size rhsBits>
 constexpr auto
-operator-(GenericSigned<lhsSignType, lhsBits> const& lhs, GenericSigned<rhsSignType, rhsBits> const& rhs)
+operator-(SignedBig<lhsSignType, lhsBits> const& lhs, SignedBig<rhsSignType, rhsBits> const& rhs)
 {
   // if compile time sign inequality
   if constexpr (SignType::Runtime != lhsSignType && SignType::Runtime != rhsSignType && lhsSignType != rhsSignType) {
-    return GenericSigned{ lhsSignType, lhs.abs() + rhs.abs() };
+    return SignedBig{ lhsSignType, lhs.abs() + rhs.abs() };
 
   } else { // all other cases require runtime evaluation
 
     // ensure compile time known return type that fits all return paths
-    using SignedBigT = GenericSigned<SignType::Runtime, decltype(lhs.abs() + rhs.abs())::gBits>;
+    using SignedBigT = SignedBig<SignType::Runtime, decltype(lhs.abs() + rhs.abs())::gBits>;
 
     // positive - negative || negative - positive
     if (lhs.sign() != rhs.sign()) {
@@ -93,16 +96,43 @@ operator-(GenericSigned<lhsSignType, lhsBits> const& lhs, GenericSigned<rhsSignT
 
 template<SignType lhsSignType, Size lhsBits, SignType rhsSignType, Size rhsBits>
 constexpr auto
-operator*(GenericSigned<lhsSignType, lhsBits> const& lhs, GenericSigned<rhsSignType, rhsBits> const& rhs)
+operator*(SignedBig<lhsSignType, lhsBits> const& lhs, SignedBig<rhsSignType, rhsBits> const& rhs)
 {
   if constexpr (SignType::Runtime == lhsSignType || SignType::Runtime == rhsSignType) {
-    return GenericSigned{ SignType::Runtime, lhs.abs() * rhs.abs(), lhs.sign() == rhs.sign() };
+    return SignedBig{ SignType::Runtime, lhs.abs() * rhs.abs(), lhs.sign() == rhs.sign() };
 
   } else if constexpr (rhsSignType == lhsSignType) {
-    return GenericSigned{ SignType::Positive, lhs.abs() * rhs.abs() };
+    return SignedBig{ SignType::Positive, lhs.abs() * rhs.abs() };
 
   } else { // rhsSignType != lhsSignType
-    return GenericSigned{ SignType::Negative, lhs.abs() * rhs.abs() };
+    return SignedBig{ SignType::Negative, lhs.abs() * rhs.abs() };
   }
 }
+
+// NOLINTBEGIN(*-macro-usage)
+// clang-format off
+#ifdef BIG_MAKE_WRAPPER
+#error "BIG_MAKE_WRAPPER is already defined"
+#endif
+#define BIG_MAKE_WRAPPER(OP)                                                 \
+  template<typename Rhs>                                                     \
+    requires(!IsSignedBig<Rhs>) && requires(Rhs const& rhs){SignedBig{rhs};} \
+  constexpr auto operator OP(IsSignedBig auto const& lhs, Rhs const& rhs)    \
+  {                                                                          \
+    return lhs OP SignedBig{ rhs };                                          \
+  }                                                                          \
+                                                                             \
+  template<typename Lhs>                                                     \
+    requires(!IsSignedBig<Lhs>) && requires(Lhs const& lhs){SignedBig{lhs};} \
+  constexpr auto operator OP(Lhs const& lhs, IsSignedBig auto const& rhs)    \
+  {                                                                          \
+    return SignedBig{ lhs } OP rhs;                                          \
+  }
+BIG_MAKE_WRAPPER(+)
+BIG_MAKE_WRAPPER(-)
+BIG_MAKE_WRAPPER(*)
+#undef BIG_MAKE_WRAPPER
+// clang-format on
+// NOLINTEND(*-macro-usage)
+
 } // namespace big

@@ -1,5 +1,4 @@
-#include <common/int.hpp>
-#include <common/mask.hpp>
+#include <common.hpp>
 
 #include <cstdlib>
 #include <exception>

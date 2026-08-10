@@ -1,8 +1,13 @@
 #pragma once
 
-#include <big/common.hpp>
-#include <big/unsigned.hpp>
-#include <big/unsigned_compare.hpp>
+// IWYU pragma: private, include <unsigned.hpp>
+
+#include <unsigned/declaration.hpp>
+#include <unsigned/forward.hpp>
+
+#include <common/int.hpp>
+
+#include <array>
 
 namespace big {
 
@@ -28,8 +33,8 @@ constexpr auto gUnsignedBig = [] {
   constexpr auto neededArrayBits = [neededUintBits]<Size size>(std::array<Element, size> const & elements) {
     for (Size i = elements.size(); i > 0;) {
       --i;
-      if (elements[i] != Element{ 0 }) {                       // NOLINT(*-constant-array-index)
-        return i * gElementBits + neededUintBits(elements[i]); // NOLINT(*-constant-array-index)
+      if (elements[i] != Element{ 0 }) {                         // NOLINT(*-constant-array-index)
+        return (i * gElementBits) + neededUintBits(elements[i]); // NOLINT(*-constant-array-index)
       }
     }
     return Size{ 0 };

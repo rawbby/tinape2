@@ -1,5 +1,7 @@
 #pragma once
 
+// IWYU pragma: private, include <common.hpp>
+
 #include <common/type_traits.hpp> // Is, IsAny
 
 #include <concepts>    // unsigned_integral, std::signed_integral

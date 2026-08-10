@@ -1,10 +1,14 @@
 #pragma once
 
-#include <big/unsigned.hpp>             // big::UnsignedBig
-#include <big/unsigned_type_traits.hpp> // big::IsUnsignedBig
+// IWYU pragma: private, include <unsigned.hpp>
 
-#include <algorithm> // std::max, std::max
-#include <compare>   // std::strong_ordering, std::is_eq
+#include <unsigned/declaration.hpp>
+#include <unsigned/forward.hpp>
+
+#include <common/int.hpp>
+
+#include <algorithm>
+#include <compare>
 
 namespace big {
 
@@ -80,29 +84,36 @@ operator==(Lhs const& lhs, Rhs const& rhs) -> bool
   return true;
 }
 
-// NOLINTBEGIN(*-macro-usage)
-// clang-format off
-#ifdef BIG_MAKE_WRAPPER
-#error "BIG_MAKE_WRAPPER is already defined"
-#endif
-#define BIG_MAKE_WRAPPER(OP)                                                     \
-  template<typename Rhs>                                                         \
-    requires(!IsUnsignedBig<Rhs>) && requires(Rhs const& rhs){UnsignedBig{rhs};} \
-  constexpr auto operator OP(IsUnsignedBig auto const& lhs, Rhs const& rhs)      \
-  {                                                                              \
-    return lhs OP UnsignedBig{ rhs };                                            \
-  }                                                                              \
-                                                                                 \
-  template<typename Lhs>                                                         \
-    requires(!IsUnsignedBig<Lhs>) && requires(Lhs const& lhs){UnsignedBig{lhs};} \
-  constexpr auto operator OP(Lhs const& lhs, IsUnsignedBig auto const& rhs)      \
-  {                                                                              \
-    return UnsignedBig{ lhs } OP rhs;                                            \
-  }
-BIG_MAKE_WRAPPER(<=>)
-BIG_MAKE_WRAPPER(==)
-#undef BIG_MAKE_WRAPPER
-// clang-format on
-// NOLINTEND(*-macro-usage)
+template<typename Rhs>
+  requires(!IsUnsignedBig<Rhs>) && requires(Rhs const& rhs) { UnsignedBig{ rhs }; }
+constexpr auto
+operator<=>(IsUnsignedBig auto const& lhs, Rhs const& rhs)
+{
+  return lhs <=> UnsignedBig{ rhs };
+}
+
+template<typename Lhs>
+  requires(!IsUnsignedBig<Lhs>) && requires(Lhs const& lhs) { UnsignedBig{ lhs }; }
+constexpr auto
+operator<=>(Lhs const& lhs, IsUnsignedBig auto const& rhs)
+{
+  return UnsignedBig{ lhs } <=> rhs;
+}
+
+template<typename Rhs>
+  requires(!IsUnsignedBig<Rhs>) && requires(Rhs const& rhs) { UnsignedBig{ rhs }; }
+constexpr auto
+operator==(IsUnsignedBig auto const& lhs, Rhs const& rhs)
+{
+  return lhs == UnsignedBig{ rhs };
+}
+
+template<typename Lhs>
+  requires(!IsUnsignedBig<Lhs>) && requires(Lhs const& lhs) { UnsignedBig{ lhs }; }
+constexpr auto
+operator==(Lhs const& lhs, IsUnsignedBig auto const& rhs)
+{
+  return UnsignedBig{ lhs } == rhs;
+}
 
 } // namespace big
