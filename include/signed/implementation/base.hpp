@@ -7,6 +7,58 @@
 namespace big {
 
 template<SignType signType, Size bits>
+template<IsSignedBigInit<signType, bits> Value>
+  requires(!Is<Value, SignedBig<signType, bits>>)
+constexpr SignedBig<signType, bits>::SignedBig(Value&& value)
+{
+  set(std::forward<Value>(value));
+}
+
+template<SignType signType, Size bits>
+template<IsSignedBigInit<signType, bits> Value>
+  requires(SignedBig<signType, bits>::gSignType == Runtime)
+constexpr SignedBig<signType, bits>::SignedBig(Value&& value, bool sign)
+{
+  set(std::forward<Value>(value), sign);
+}
+
+template<SignType signType, Size bits>
+template<IsSignedBigInit<signType, bits> Value>
+  requires(!Is<Value, SignedBig<signType, bits>>)
+constexpr auto
+SignedBig<signType, bits>::operator=(Value&& value) -> SignedBig&
+{
+  set(std::forward<Value>(value));
+  return *this;
+}
+
+template<SignType signType, Size bits>
+template<IsSignedBigConstevalInit<signType, bits> Value>
+  requires(!Is<Value, SignedBig<signType, bits>>)
+consteval SignedBig<signType, bits>::SignedBig(Value&& value)
+{
+  set(std::forward<Value>(value));
+}
+
+template<SignType signType, Size bits>
+template<IsSignedBigConstevalInit<signType, bits> Value>
+  requires(SignedBig<signType, bits>::gSignType == Runtime)
+consteval SignedBig<signType, bits>::SignedBig(Value&& value, bool sign)
+{
+  set(std::forward<Value>(value), sign);
+}
+
+template<SignType signType, Size bits>
+template<IsSignedBigConstevalInit<signType, bits> Value>
+  requires(!Is<Value, SignedBig<signType, bits>>)
+consteval auto
+SignedBig<signType, bits>::operator=(Value&& value) -> SignedBig&
+{
+  set(std::forward<Value>(value));
+  return *this;
+}
+
+template<SignType signType, Size bits>
 constexpr auto
 SignedBig<signType, bits>::abs() const -> UnsignedBig<bits> const&
 {

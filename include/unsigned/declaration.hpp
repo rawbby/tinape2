@@ -5,11 +5,10 @@
 #include <unsigned/forward.hpp>
 
 #include <common/int.hpp>
-#include <common/mask.hpp>
 #include <common/type_traits.hpp>
 
-#include <algorithm>
-#include <stdexcept>
+#include <compare>
+#include <optional>
 #include <type_traits>
 
 namespace big {
@@ -93,5 +92,85 @@ UnsignedBig(Value) -> UnsignedBig<gBitsOf<Value>>;
 
 template<IsSignedIntegral Value>
 UnsignedBig(Value) -> UnsignedBig<gBitsOf<Value> - 1>;
+
+template<Size lhsBits, Size rhsBits>
+constexpr auto
+operator+(UnsignedBig<lhsBits> const& lhs, UnsignedBig<rhsBits> const& rhs);
+
+template<Size lhsBits, Size rhsBits>
+constexpr auto
+operator-(UnsignedBig<lhsBits> const& lhs, UnsignedBig<rhsBits> const& rhs);
+
+template<Size lhsBits, Size rhsBits>
+constexpr auto
+operator*(UnsignedBig<lhsBits> const& lhs, UnsignedBig<rhsBits> const& rhs);
+
+template<typename Rhs>
+  requires(!IsUnsignedBig<Rhs>) && requires(Rhs const& rhs) { UnsignedBig{ rhs }; }
+constexpr auto
+operator+(IsUnsignedBig auto const& lhs, Rhs const& rhs);
+
+template<typename Lhs>
+  requires(!IsUnsignedBig<Lhs>) && requires(Lhs const& lhs) { UnsignedBig{ lhs }; }
+constexpr auto
+operator+(Lhs const& lhs, IsUnsignedBig auto const& rhs);
+
+template<typename Rhs>
+  requires(!IsUnsignedBig<Rhs>) && requires(Rhs const& rhs) { UnsignedBig{ rhs }; }
+constexpr auto
+operator-(IsUnsignedBig auto const& lhs, Rhs const& rhs);
+
+template<typename Lhs>
+  requires(!IsUnsignedBig<Lhs>) && requires(Lhs const& lhs) { UnsignedBig{ lhs }; }
+constexpr auto
+operator-(Lhs const& lhs, IsUnsignedBig auto const& rhs);
+
+template<typename Rhs>
+  requires(!IsUnsignedBig<Rhs>) && requires(Rhs const& rhs) { UnsignedBig{ rhs }; }
+constexpr auto
+operator*(IsUnsignedBig auto const& lhs, Rhs const& rhs);
+
+template<typename Lhs>
+  requires(!IsUnsignedBig<Lhs>) && requires(Lhs const& lhs) { UnsignedBig{ lhs }; }
+constexpr auto
+operator*(Lhs const& lhs, IsUnsignedBig auto const& rhs);
+
+template<IsUnsignedBig Lhs, IsUnsignedBig Rhs>
+constexpr auto
+operator<=>(Lhs const& lhs, Rhs const& rhs) -> std::strong_ordering;
+
+template<IsUnsignedBig Lhs, IsUnsignedBig Rhs>
+constexpr auto
+operator==(Lhs const& lhs, Rhs const& rhs) -> bool;
+
+template<typename Rhs>
+  requires(!IsUnsignedBig<Rhs>) && requires(Rhs const& rhs) { UnsignedBig{ rhs }; }
+constexpr auto
+operator<=>(IsUnsignedBig auto const& lhs, Rhs const& rhs);
+
+template<typename Lhs>
+  requires(!IsUnsignedBig<Lhs>) && requires(Lhs const& lhs) { UnsignedBig{ lhs }; }
+constexpr auto
+operator<=>(Lhs const& lhs, IsUnsignedBig auto const& rhs);
+
+template<typename Rhs>
+  requires(!IsUnsignedBig<Rhs>) && requires(Rhs const& rhs) { UnsignedBig{ rhs }; }
+constexpr auto
+operator==(IsUnsignedBig auto const& lhs, Rhs const& rhs);
+
+template<typename Lhs>
+  requires(!IsUnsignedBig<Lhs>) && requires(Lhs const& lhs) { UnsignedBig{ lhs }; }
+constexpr auto
+operator==(Lhs const& lhs, IsUnsignedBig auto const& rhs);
+
+/// truncation based cast without extensive runtime checking but simple (exact) masking
+template<IsUnsignedBig ToUnsignedBig, IsUnsignedBig FromUnsignedBig>
+[[nodiscard]] constexpr auto
+castBigUnsafe(FromUnsignedBig const& value) -> ToUnsignedBig;
+
+/// safe casting returns a valid value if fromValue fits toValue or std::nullopt
+template<IsUnsignedBig ToUnsignedBig, IsUnsignedBig FromUnsignedBig>
+[[nodiscard]] constexpr auto
+castBigSafe(FromUnsignedBig const& value) -> std::optional<ToUnsignedBig>;
 
 } // namespace big

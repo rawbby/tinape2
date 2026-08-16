@@ -2,6 +2,7 @@
 
 // IWYU pragma: private, include <unsigned.hpp>
 
+#include <unsigned/declaration.hpp>
 #include <unsigned/forward.hpp>
 
 #include <common/int.hpp>

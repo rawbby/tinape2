@@ -7,6 +7,8 @@
 #include <common.hpp>
 #include <unsigned.hpp>
 
+#include <compare>
+#include <optional>
 #include <type_traits>
 
 namespace big {
@@ -114,5 +116,38 @@ SignedBig(Value const&) -> SignedBig<Positive, gBitsOf<Value>>;
 template<IsLimbs Value>
   requires(!gLimbIsElement)
 SignedBig(Value const&, bool) -> SignedBig<Runtime, gBitsOf<Value>>;
+
+template<SignType signType, Size bits>
+constexpr auto operator-(SignedBig<signType, bits> const& value);
+
+template<SignType lhsSignType, Size lhsBits, SignType rhsSignType, Size rhsBits>
+constexpr auto operator+(SignedBig<lhsSignType, lhsBits> const& lhs, SignedBig<rhsSignType, rhsBits> const& rhs);
+
+template<SignType lhsSignType, Size lhsBits, SignType rhsSignType, Size rhsBits>
+constexpr auto operator-(SignedBig<lhsSignType, lhsBits> const& lhs, SignedBig<rhsSignType, rhsBits> const& rhs);
+
+template<SignType lhsSignType, Size lhsBits, SignType rhsSignType, Size rhsBits>
+constexpr auto operator*(SignedBig<lhsSignType, lhsBits> const& lhs, SignedBig<rhsSignType, rhsBits> const& rhs);
+
+template<typename Rhs> requires(!IsSignedBig<Rhs>) && requires(Rhs const& rhs){SignedBig{rhs};} constexpr auto operator +(IsSignedBig auto const& lhs, Rhs const& rhs); template<typename Lhs> requires(!IsSignedBig<Lhs>) && requires(Lhs const& lhs){SignedBig{lhs};} constexpr auto operator +(Lhs const& lhs, IsSignedBig auto const& rhs);
+template<typename Rhs> requires(!IsSignedBig<Rhs>) && requires(Rhs const& rhs){SignedBig{rhs};} constexpr auto operator -(IsSignedBig auto const& lhs, Rhs const& rhs); template<typename Lhs> requires(!IsSignedBig<Lhs>) && requires(Lhs const& lhs){SignedBig{lhs};} constexpr auto operator -(Lhs const& lhs, IsSignedBig auto const& rhs);
+template<typename Rhs> requires(!IsSignedBig<Rhs>) && requires(Rhs const& rhs){SignedBig{rhs};} constexpr auto operator *(IsSignedBig auto const& lhs, Rhs const& rhs); template<typename Lhs> requires(!IsSignedBig<Lhs>) && requires(Lhs const& lhs){SignedBig{lhs};} constexpr auto operator *(Lhs const& lhs, IsSignedBig auto const& rhs);
+
+template<IsSignedBig Lhs, IsSignedBig Rhs>
+constexpr auto operator<=>(Lhs const& lhs, Rhs const& rhs) -> std::strong_ordering;
+
+template<SignType lhsSignType, Size lhsBits, SignType rhsSignType, Size rhsBits>
+constexpr auto operator==(SignedBig<lhsSignType, lhsBits> const& lhs, SignedBig<rhsSignType, rhsBits> const& rhs) -> bool;
+
+template<typename Rhs> requires(!IsSignedBig<Rhs>) && requires(Rhs const& rhs){SignedBig{rhs};} constexpr auto operator <=>(IsSignedBig auto const& lhs, Rhs const& rhs); template<typename Lhs> requires(!IsSignedBig<Lhs>) && requires(Lhs const& lhs){SignedBig{lhs};} constexpr auto operator <=>(Lhs const& lhs, IsSignedBig auto const& rhs);
+template<typename Rhs> requires(!IsSignedBig<Rhs>) && requires(Rhs const& rhs){SignedBig{rhs};} constexpr auto operator ==(IsSignedBig auto const& lhs, Rhs const& rhs); template<typename Lhs> requires(!IsSignedBig<Lhs>) && requires(Lhs const& lhs){SignedBig{lhs};} constexpr auto operator ==(Lhs const& lhs, IsSignedBig auto const& rhs);
+
+/// truncation based cast without extensive runtime checking but simple (exact) masking
+template<IsSignedBig ToSignedBig, SignType fromSignType, Size fromBits>
+[[nodiscard]] constexpr auto castBigUnsafe(SignedBig<fromSignType, fromBits> const& fromValue) -> ToSignedBig;
+
+/// safe casting returns a valid value if fromValue fits toValue or std::nullopt
+template<IsSignedBig ToSignedBig, SignType fromSignType, Size fromBits>
+[[nodiscard]] constexpr auto castBigSafe(SignedBig<fromSignType, fromBits> const& fromValue) -> std::optional<ToSignedBig>;
 
 } // namespace big

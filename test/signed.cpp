@@ -1,7 +1,8 @@
 #include <common.hpp>
-#include <unsigned.hpp>
 #include <signed.hpp>
+#include <unsigned.hpp>
 
+#include <array>
 #include <cstdlib>
 #include <exception>
 

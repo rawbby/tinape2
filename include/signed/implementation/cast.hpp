@@ -2,6 +2,9 @@
 
 // IWYU pragma: private, include <signed.hpp>
 
+#include <signed/declaration.hpp>
+#include <signed/forward.hpp>
+
 #include <common.hpp>
 
 #include <optional>
