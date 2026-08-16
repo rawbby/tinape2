@@ -65,56 +65,20 @@ public:
     requires(!Is<Value, SignedBig<signType, bits>>)
   consteval auto operator=(Value&& value) -> SignedBig&;
 
-  [[nodiscard]] constexpr auto abs() const -> UnsignedBig<bits> const&
-  {
-    return std::get<0>(mUnderlying);
-  }
+  [[nodiscard]] constexpr auto abs() const -> UnsignedBig<bits> const&;
 
-  [[nodiscard]] constexpr auto sign() const -> bool
-  {
-    if constexpr (signType == Runtime) {
-      return std::get<1>(mUnderlying);
-    }
-    return signType == Positive;
-  }
+  [[nodiscard]] constexpr auto sign() const -> bool;
 
 private:
   template<typename Value>
     requires(!IsSignedIntegral<Value>)
-  constexpr void set(Value const& value)
-  {
-    set(value, signType != Negative);
-  }
+  constexpr void set(Value const& value);
 
   template<IsSignedIntegral Value>
-  constexpr void set(Value value)
-  {
-    using ValueUnsigned  = MakeUnsigned<Value>;
-    auto const valueSign = value >= 0;
-    auto const valueAbs  = static_cast<ValueUnsigned>(valueSign ? value : -value);
-    set(valueAbs, valueSign);
-  }
+  constexpr void set(Value value);
 
   template<typename Value>
-  constexpr void set(Value const& value, bool sign)
-  {
-    if (std::is_constant_evaluated()) {
-      if constexpr (signType == Positive) {
-        if (!sign) {
-          throw std::invalid_argument{ "positive sign type cannot hold negative values" };
-        }
-      } else if constexpr (signType == Negative) {
-        if (sign) {
-          throw std::invalid_argument{ "negative sign type cannot hold positive values" };
-        }
-      }
-    }
-
-    if constexpr (signType == Runtime) {
-      std::get<1>(mUnderlying) = sign;
-    }
-    std::get<0>(mUnderlying) = value;
-  }
+  constexpr void set(Value const& value, bool sign);
 };
 
 SignedBig() -> SignedBig<Positive, 0>;
