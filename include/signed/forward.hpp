@@ -21,6 +21,8 @@ enum SignType : I8
 template<SignType signType, Size bits>
 class SignedBig;
 
+namespace impl {
+
 template<typename T>
 struct IsSignedBigHelper final : std::false_type
 {};
@@ -43,8 +45,10 @@ struct IsSignedBigHelper<SignedBig<signType, bits>> final : std::true_type
   constexpr static auto gSignType      = signType;
 };
 
+} // namespace impl
+
 template<typename T>
-concept IsSignedBig = IsSignedBigHelper<std::remove_cvref_t<T>>::value;
+concept IsSignedBig = impl::IsSignedBigHelper<std::remove_cvref_t<T>>::value;
 
 // clang-format off
 template <IsSignedBig... Ts>
@@ -54,6 +58,8 @@ using CommonSignedBig = SignedBig<
         : SignType::Runtime,
     CommonUnsignedBig<typename Ts::UnsignedBig...>::gBits>;
 // clang-format on
+
+namespace impl {
 
 /// describes values a SignedBig is explicitly constructible from without runtime errors
 template<typename Value, SignType signType, Size bits>
@@ -86,5 +92,7 @@ concept IsSignedBigConstevalInit = !IsSignedBigInit<Value, signType, bits> && []
   using V = std::remove_cvref_t<Value>;
   return IsSignedBig<V> || IsUnsignedBig<V> || IsUnsignedIntegral<V> || IsSignedIntegral<V> || IsElements<V> || IsLimbs<V>;
 }();
+
+} // namespace impl
 
 } // namespace big

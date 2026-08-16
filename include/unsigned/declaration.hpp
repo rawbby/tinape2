@@ -16,7 +16,7 @@ namespace big {
 template<Size bits>
 class UnsignedBig final
 {
-  using Traits = IsUnsignedBigHelper<UnsignedBig<bits>>;
+  using Traits = impl::IsUnsignedBigHelper<UnsignedBig<bits>>;
 
 public:
   using Data = Traits::Data;
@@ -40,19 +40,19 @@ public:
   constexpr auto operator=(UnsignedBig const& other) -> UnsignedBig&     = default;
   constexpr auto operator=(UnsignedBig&& other) noexcept -> UnsignedBig& = default;
 
-  template<IsUnsignedBigInit<bits> Value>
+  template<impl::IsUnsignedBigInit<bits> Value>
     requires(!Is<Value, UnsignedBig<bits>>)
   constexpr explicit UnsignedBig(Value&& value);
 
-  template<IsUnsignedBigInit<bits> Value>
+  template<impl::IsUnsignedBigInit<bits> Value>
     requires(!Is<Value, UnsignedBig<bits>>)
   constexpr auto operator=(Value&& value) -> UnsignedBig&;
 
-  template<IsUnsignedBigConstevalInit<bits> Value>
+  template<impl::IsUnsignedBigConstevalInit<bits> Value>
     requires(!Is<Value, UnsignedBig<bits>>)
   consteval explicit UnsignedBig(Value&& value);
 
-  template<IsUnsignedBigConstevalInit<bits> Value>
+  template<impl::IsUnsignedBigConstevalInit<bits> Value>
     requires(!Is<Value, UnsignedBig<bits>>)
   consteval auto operator=(Value&& value) -> UnsignedBig&;
 

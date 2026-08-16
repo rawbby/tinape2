@@ -13,7 +13,7 @@
 namespace big {
 
 template<SignType signType, Size bits>
-template<IsSignedBigInit<signType, bits> Value>
+template<impl::IsSignedBigInit<signType, bits> Value>
   requires(!Is<Value, SignedBig<signType, bits>>)
 constexpr SignedBig<signType, bits>::SignedBig(Value&& value)
 {
@@ -21,7 +21,7 @@ constexpr SignedBig<signType, bits>::SignedBig(Value&& value)
 }
 
 template<SignType signType, Size bits>
-template<IsSignedBigInit<signType, bits> Value>
+template<impl::IsSignedBigInit<signType, bits> Value>
   requires(signType == Runtime)
 constexpr SignedBig<signType, bits>::SignedBig(Value&& value, bool sign)
 {
@@ -29,7 +29,7 @@ constexpr SignedBig<signType, bits>::SignedBig(Value&& value, bool sign)
 }
 
 template<SignType signType, Size bits>
-template<IsSignedBigInit<signType, bits> Value>
+template<impl::IsSignedBigInit<signType, bits> Value>
   requires(!Is<Value, SignedBig<signType, bits>>)
 constexpr auto
 SignedBig<signType, bits>::operator=(Value&& value) -> SignedBig&
@@ -39,7 +39,7 @@ SignedBig<signType, bits>::operator=(Value&& value) -> SignedBig&
 }
 
 template<SignType signType, Size bits>
-template<IsSignedBigConstevalInit<signType, bits> Value>
+template<impl::IsSignedBigConstevalInit<signType, bits> Value>
   requires(!Is<Value, SignedBig<signType, bits>>)
 consteval SignedBig<signType, bits>::SignedBig(Value&& value)
 {
@@ -47,7 +47,7 @@ consteval SignedBig<signType, bits>::SignedBig(Value&& value)
 }
 
 template<SignType signType, Size bits>
-template<IsSignedBigConstevalInit<signType, bits> Value>
+template<impl::IsSignedBigConstevalInit<signType, bits> Value>
   requires(signType == Runtime)
 consteval SignedBig<signType, bits>::SignedBig(Value&& value, bool sign)
 {
@@ -55,7 +55,7 @@ consteval SignedBig<signType, bits>::SignedBig(Value&& value, bool sign)
 }
 
 template<SignType signType, Size bits>
-template<IsSignedBigConstevalInit<signType, bits> Value>
+template<impl::IsSignedBigConstevalInit<signType, bits> Value>
   requires(!Is<Value, SignedBig<signType, bits>>)
 consteval auto
 SignedBig<signType, bits>::operator=(Value&& value) -> SignedBig&

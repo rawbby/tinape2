@@ -38,6 +38,7 @@ constexpr auto gLimbIsElement = IsLimb<Element>;
 template<Size bits>
 class UnsignedBig;
 
+namespace impl {
 template<typename T>
 struct IsUnsignedBigHelper final : std::false_type
 {};
@@ -75,13 +76,17 @@ struct IsUnsignedBigHelper<UnsignedBig<bits>> final : std::true_type
   static_assert(!gIsWideData || gNumElements == 2);
 };
 
+} // namespace impl
+
 /// exact match to use with auto to only accept exact match
 template<typename T>
-concept IsUnsignedBig = IsUnsignedBigHelper<std::remove_cvref_t<T>>::value;
+concept IsUnsignedBig = impl::IsUnsignedBigHelper<std::remove_cvref_t<T>>::value;
 
 /// a type that can be assigned safely from all the given unsigned types without truncation
 template<IsUnsignedBig... Args>
-using CommonUnsignedBig = UnsignedBig<std::max({ IsUnsignedBigHelper<std::remove_cvref_t<Args>>::gBits... })>;
+using CommonUnsignedBig = UnsignedBig<std::max({ impl::IsUnsignedBigHelper<std::remove_cvref_t<Args>>::gBits... })>;
+
+namespace impl {
 
 /// describes values an UnsignedBig is explicitly constructible from
 template<typename Value, Size bits>
@@ -106,5 +111,7 @@ concept IsUnsignedBigConstevalInit = !IsUnsignedBigInit<Value, bits> && []() con
   using V = std::remove_cvref_t<Value>;
   return IsUnsignedBig<V> || IsUnsignedIntegral<V> || IsSignedIntegral<V> || IsElements<V> || IsLimbs<V>;
 }();
+
+} // namespace impl
 
 } // namespace big
