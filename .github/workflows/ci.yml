@@ -2,7 +2,7 @@ name: ci
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        preset: [ci-debug, ci-release]
+        preset: [ ci-debug, ci-release ]
     steps:
       - uses: actions/checkout@v4
       - run: cmake --preset ${{ matrix.preset }}

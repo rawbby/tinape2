@@ -1,11 +1,6 @@
-set(TEST_SOURCES
-        common.cpp
-        signed.cpp
-        unsigned.cpp)
+file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_LIST_DIR}/*.cpp)
 
 foreach (TEST_SOURCE IN LISTS TEST_SOURCES)
-    set(TEST_SOURCE "${CMAKE_CURRENT_LIST_DIR}/${TEST_SOURCE}")
-
     file(RELATIVE_PATH TEST_REL_PATH "${CMAKE_CURRENT_SOURCE_DIR}" "${TEST_SOURCE}")
     get_filename_component(TEST_REL_DIR "${TEST_REL_PATH}" DIRECTORY)
     get_filename_component(TEST_NAME_WE ${TEST_SOURCE} NAME_WE)

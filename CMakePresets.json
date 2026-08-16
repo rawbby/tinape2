@@ -30,7 +30,9 @@
     {
       "name": "ci-debug",
       "inherits": "debug",
-      "cacheVariables": { "TINAPE_LOCAL": "OFF" }
+      "cacheVariables": {
+        "TINAPE_LOCAL": "OFF"
+      }
     },
     {
       "name": "ci-release",
@@ -42,15 +44,51 @@
     }
   ],
   "buildPresets": [
-    { "name": "debug", "configurePreset": "debug" },
-    { "name": "release", "configurePreset": "release" },
-    { "name": "ci-debug", "configurePreset": "ci-debug" },
-    { "name": "ci-release", "configurePreset": "ci-release" }
+    {
+      "name": "debug",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "release",
+      "configurePreset": "release"
+    },
+    {
+      "name": "ci-debug",
+      "configurePreset": "ci-debug"
+    },
+    {
+      "name": "ci-release",
+      "configurePreset": "ci-release"
+    }
   ],
   "testPresets": [
-    { "name": "debug", "configurePreset": "debug", "output": { "outputOnFailure": true } },
-    { "name": "release", "configurePreset": "release", "output": { "outputOnFailure": true } },
-    { "name": "ci-debug", "configurePreset": "ci-debug", "output": { "outputOnFailure": true } },
-    { "name": "ci-release", "configurePreset": "ci-release", "output": { "outputOnFailure": true } }
+    {
+      "name": "debug",
+      "configurePreset": "debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "release",
+      "configurePreset": "release",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "ci-debug",
+      "configurePreset": "ci-debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "ci-release",
+      "configurePreset": "ci-release",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
   ]
 }
