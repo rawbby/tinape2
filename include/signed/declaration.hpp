@@ -9,7 +9,6 @@
 
 #include <compare>
 #include <optional>
-#include <type_traits>
 
 namespace big {
 
@@ -48,7 +47,7 @@ public:
   constexpr explicit SignedBig(Value&& value);
 
   template<IsSignedBigInit<signType, bits> Value>
-    requires(gSignType == Runtime)
+    requires(signType == Runtime)
   constexpr explicit SignedBig(Value&& value, bool sign);
 
   template<IsSignedBigInit<signType, bits> Value>
@@ -60,7 +59,7 @@ public:
   consteval explicit SignedBig(Value&& value);
 
   template<IsSignedBigConstevalInit<signType, bits> Value>
-    requires(gSignType == Runtime)
+    requires(signType == Runtime)
   consteval explicit SignedBig(Value&& value, bool sign);
 
   template<IsSignedBigConstevalInit<signType, bits> Value>

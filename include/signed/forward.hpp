@@ -73,7 +73,7 @@ concept IsSignedBigInit = []() consteval -> bool {
   }
 
   else if constexpr (IsSignedIntegral<V>) {
-    return (signType == Runtime) && (gBitsOf<V> <= bits);
+    return (signType == Runtime) && (gBitsOf<V> - 1 <= bits);
   }
 
   return false;

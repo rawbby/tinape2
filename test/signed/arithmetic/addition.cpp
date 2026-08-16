@@ -25,8 +25,10 @@ testExhaustiveAgainstReference()
 {
   for (I32 lhs = -127; lhs <= 127; ++lhs) {
     for (I32 rhs = -127; rhs <= 127; ++rhs) {
-      auto const sum = SignedBig{ static_cast<I8>(lhs) } + SignedBig{ static_cast<I8>(rhs) };
-      require(sum == lhs + rhs);
+      auto const bigLhs = SignedBig{ static_cast<I8>(lhs) };
+      auto const bigRhs = SignedBig{ static_cast<I8>(rhs) };
+      auto const bigRes = bigLhs + bigRhs;
+      require(bigRes == lhs + rhs);
     }
   }
 }

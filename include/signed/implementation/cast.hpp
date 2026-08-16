@@ -6,6 +6,7 @@
 #include <signed/forward.hpp>
 
 #include <common.hpp>
+#include <unsigned.hpp>
 
 #include <optional>
 

@@ -3,6 +3,12 @@
 // IWYU pragma: private, include <signed.hpp>
 
 #include <signed/declaration.hpp>
+#include <signed/forward.hpp>
+
+#include <common.hpp>
+#include <unsigned.hpp>
+
+#include <type_traits>
 
 namespace big {
 
@@ -16,7 +22,7 @@ constexpr SignedBig<signType, bits>::SignedBig(Value&& value)
 
 template<SignType signType, Size bits>
 template<IsSignedBigInit<signType, bits> Value>
-  requires(SignedBig<signType, bits>::gSignType == Runtime)
+  requires(signType == Runtime)
 constexpr SignedBig<signType, bits>::SignedBig(Value&& value, bool sign)
 {
   set(std::forward<Value>(value), sign);
@@ -42,7 +48,7 @@ consteval SignedBig<signType, bits>::SignedBig(Value&& value)
 
 template<SignType signType, Size bits>
 template<IsSignedBigConstevalInit<signType, bits> Value>
-  requires(SignedBig<signType, bits>::gSignType == Runtime)
+  requires(signType == Runtime)
 consteval SignedBig<signType, bits>::SignedBig(Value&& value, bool sign)
 {
   set(std::forward<Value>(value), sign);

@@ -4,8 +4,10 @@
 
 #include <signed/declaration.hpp>
 #include <signed/forward.hpp>
+#include <signed/implementation/arithmetic.hpp>
 
 #include <common.hpp>
+#include <unsigned.hpp>
 
 #include <compare>
 
@@ -47,29 +49,36 @@ operator==(SignedBig<lhsSignType, lhsBits> const& lhs, SignedBig<rhsSignType, rh
   return std::is_eq(lhs <=> rhs);
 }
 
-// NOLINTBEGIN(*-macro-usage)
-// clang-format off
-#ifdef BIG_MAKE_WRAPPER
-#error "BIG_MAKE_WRAPPER is already defined"
-#endif
-#define BIG_MAKE_WRAPPER(OP)                                                 \
-  template<typename Rhs>                                                     \
-    requires(!IsSignedBig<Rhs>) && requires(Rhs const& rhs){SignedBig{rhs};} \
-  constexpr auto operator OP(IsSignedBig auto const& lhs, Rhs const& rhs)    \
-  {                                                                          \
-    return lhs OP SignedBig{ rhs };                                          \
-  }                                                                          \
-                                                                             \
-  template<typename Lhs>                                                     \
-    requires(!IsSignedBig<Lhs>) && requires(Lhs const& lhs){SignedBig{lhs};} \
-  constexpr auto operator OP(Lhs const& lhs, IsSignedBig auto const& rhs)    \
-  {                                                                          \
-    return SignedBig{ lhs } OP rhs;                                          \
-  }
-BIG_MAKE_WRAPPER(<=>)
-BIG_MAKE_WRAPPER(==)
-#undef BIG_MAKE_WRAPPER
-// clang-format on
-// NOLINTEND(*-macro-usage)
+template<typename Rhs>
+  requires(!IsSignedBig<Rhs>) && requires(Rhs const& rhs) { SignedBig{ rhs }; }
+constexpr auto
+operator<=>(IsSignedBig auto const& lhs, Rhs const& rhs)
+{
+  return lhs <=> SignedBig{ rhs };
+}
+
+template<typename Lhs>
+  requires(!IsSignedBig<Lhs>) && requires(Lhs const& lhs) { SignedBig{ lhs }; }
+constexpr auto
+operator<=>(Lhs const& lhs, IsSignedBig auto const& rhs)
+{
+  return SignedBig{ lhs } <=> rhs;
+}
+
+template<typename Rhs>
+  requires(!IsSignedBig<Rhs>) && requires(Rhs const& rhs) { SignedBig{ rhs }; }
+constexpr auto
+operator==(IsSignedBig auto const& lhs, Rhs const& rhs)
+{
+  return lhs == SignedBig{ rhs };
+}
+
+template<typename Lhs>
+  requires(!IsSignedBig<Lhs>) && requires(Lhs const& lhs) { SignedBig{ lhs }; }
+constexpr auto
+operator==(Lhs const& lhs, IsSignedBig auto const& rhs)
+{
+  return SignedBig{ lhs } == rhs;
+}
 
 } // namespace big
