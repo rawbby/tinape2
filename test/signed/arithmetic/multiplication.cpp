@@ -20,15 +20,56 @@ require(bool condition)
 }
 
 /// exhaustive signed 8 bit multiplication evaluated against the built in integer reference
+template<Size lhsBits, Size rhsBits>
 void
-testExhaustiveAgainstReference()
+testExhaustiveAgainstReferenceImpl()
 {
   for (I32 lhs = -127; lhs <= 127; ++lhs) {
     for (I32 rhs = -127; rhs <= 127; ++rhs) {
-      auto const product = SignedBig{ static_cast<I8>(lhs) } * SignedBig{ static_cast<I8>(rhs) };
-      require(product == lhs * rhs);
+      auto const bigLhs     = SignedBig<Runtime, lhsBits>{ static_cast<I8>(lhs) };
+      auto const bitRhs     = SignedBig<Runtime, rhsBits>{ static_cast<I8>(rhs) };
+      auto const bigProduct = bigLhs * bitRhs;
+      require(bigProduct == lhs * rhs);
     }
   }
+}
+
+/// exhaustive signed 8 bit multiplication evaluated against the built in integer reference
+void
+testExhaustiveAgainstReference()
+{
+  testExhaustiveAgainstReferenceImpl<8, 4>();
+  testExhaustiveAgainstReferenceImpl<4, 8>();
+  testExhaustiveAgainstReferenceImpl<8, 8>();
+
+  testExhaustiveAgainstReferenceImpl<16, 8>();
+  testExhaustiveAgainstReferenceImpl<8, 16>();
+  testExhaustiveAgainstReferenceImpl<16, 16>();
+
+  testExhaustiveAgainstReferenceImpl<32, 16>();
+  testExhaustiveAgainstReferenceImpl<16, 32>();
+  testExhaustiveAgainstReferenceImpl<32, 32>();
+
+  testExhaustiveAgainstReferenceImpl<64, 32>();
+  testExhaustiveAgainstReferenceImpl<32, 64>();
+  testExhaustiveAgainstReferenceImpl<64, 64>();
+
+  testExhaustiveAgainstReferenceImpl<128, 64>();
+  testExhaustiveAgainstReferenceImpl<64, 128>();
+  testExhaustiveAgainstReferenceImpl<128, 128>();
+
+  testExhaustiveAgainstReferenceImpl<256, 128>();
+  testExhaustiveAgainstReferenceImpl<128, 256>();
+  testExhaustiveAgainstReferenceImpl<256, 256>();
+
+  testExhaustiveAgainstReferenceImpl<512, 256>();
+  testExhaustiveAgainstReferenceImpl<256, 512>();
+  testExhaustiveAgainstReferenceImpl<512, 512>();
+
+  testExhaustiveAgainstReferenceImpl<1024, 1024>();
+  testExhaustiveAgainstReferenceImpl<2048, 1024>();
+  testExhaustiveAgainstReferenceImpl<1024, 2048>();
+  testExhaustiveAgainstReferenceImpl<2048, 2048>();
 }
 
 /// the sign of the product must follow the sign rule
