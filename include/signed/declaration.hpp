@@ -9,8 +9,23 @@
 
 #include <compare>
 #include <optional>
+#include <type_traits>
 
 namespace big {
+namespace impl {
+/// describes values a SignedBig is explicitly constructible from without runtime errors
+template<typename Value, SignType signType, Size bits>
+concept IsSignedBigInit =
+  (impl::IsSignedBigHelper<std::remove_cvref_t<Value>>::value && (signType == Runtime || signType == impl::IsSignedBigHelper<std::remove_cvref_t<Value>>::gSignType) &&
+   (impl::IsSignedBigHelper<std::remove_cvref_t<Value>>::gSignType <= bits)) ||
+  ((IsUnsignedBig<Value> || IsUnsignedIntegral<Value> || IsElements<Value> || IsLimbs<Value>) && impl::IsSignedBigHelper<std::remove_cvref_t<Value>>::gBits <= bits) ||
+  ((IsSignedIntegral<Value>) && (signType == Runtime) && (impl::IsSignedBigHelper<std::remove_cvref_t<Value>>::gBits - 1 <= bits));
+/// describes values a SignedBig is explicitly constructible from only at compile time
+/// these constructions are not generally safe, but can be checked at compile time to work for compile time values
+template<typename Value, SignType signType, Size bits>
+concept IsSignedBigConstevalInit =
+  !IsSignedBigInit<Value, signType, bits> && (IsSignedBig<Value> || IsUnsignedBig<Value> || IsIntegral<Value> || IsElements<Value> || IsLimbs<Value>);
+} // namespace impl
 
 template<SignType signType, Size bits>
 class SignedBig
@@ -47,6 +62,10 @@ public:
   constexpr explicit SignedBig(Value&& value);
 
   template<impl::IsSignedBigInit<signType, bits> Value>
+    requires(!Is<Value, SignedBig<signType, bits>>)
+  constexpr explicit SignedBig(Tag<signType> /*tag*/, Value&& value);
+
+  template<impl::IsSignedBigInit<signType, bits> Value>
     requires(signType == Runtime)
   constexpr explicit SignedBig(Value&& value, bool sign);
 
@@ -57,6 +76,10 @@ public:
   template<impl::IsSignedBigConstevalInit<signType, bits> Value>
     requires(!Is<Value, SignedBig<signType, bits>>)
   consteval explicit SignedBig(Value&& value);
+
+  template<impl::IsSignedBigConstevalInit<signType, bits> Value>
+    requires(!Is<Value, SignedBig<signType, bits>>)
+  consteval explicit SignedBig(Tag<signType> /*tag*/, Value&& value);
 
   template<impl::IsSignedBigConstevalInit<signType, bits> Value>
     requires(signType == Runtime)
@@ -90,8 +113,14 @@ SignedBig(Value const&) -> SignedBig<Value::gSignType, Value::gBits>;
 template<IsSignedIntegral Value>
 SignedBig(Value) -> SignedBig<Runtime, gBitsOf<Value> - 1>;
 
+template<IsSignedIntegral Value, SignType signType>
+SignedBig(Tag<signType>, Value) -> SignedBig<signType, gBitsOf<Value> - 1>;
+
 template<IsUnsignedBig Value>
 SignedBig(Value const&) -> SignedBig<Positive, Value::gBits>;
+
+template<IsUnsignedBig Value, SignType signType>
+SignedBig(Tag<signType>, Value const&) -> SignedBig<signType, Value::gBits>;
 
 template<IsUnsignedBig Value>
 SignedBig(Value const&, bool) -> SignedBig<Runtime, Value::gBits>;
@@ -99,11 +128,17 @@ SignedBig(Value const&, bool) -> SignedBig<Runtime, Value::gBits>;
 template<IsUnsignedIntegral Value>
 SignedBig(Value) -> SignedBig<Positive, gBitsOf<Value>>;
 
+template<IsUnsignedIntegral Value, SignType signType>
+SignedBig(Tag<signType>, Value) -> SignedBig<signType, gBitsOf<Value>>;
+
 template<IsUnsignedIntegral Value>
 SignedBig(Value, bool) -> SignedBig<Runtime, gBitsOf<Value>>;
 
 template<IsElements Value>
 SignedBig(Value const&) -> SignedBig<Positive, gBitsOf<Value>>;
+
+template<IsElements Value, SignType signType>
+SignedBig(Tag<signType>, Value const&) -> SignedBig<signType, gBitsOf<Value>>;
 
 template<IsElements Value>
 SignedBig(Value const&, bool) -> SignedBig<Runtime, gBitsOf<Value>>;
@@ -111,6 +146,10 @@ SignedBig(Value const&, bool) -> SignedBig<Runtime, gBitsOf<Value>>;
 template<IsLimbs Value>
   requires(!gLimbIsElement)
 SignedBig(Value const&) -> SignedBig<Positive, gBitsOf<Value>>;
+
+template<IsLimbs Value, SignType signType>
+  requires(!gLimbIsElement)
+SignedBig(Tag<signType>, Value const&) -> SignedBig<signType, gBitsOf<Value>>;
 
 template<IsLimbs Value>
   requires(!gLimbIsElement)

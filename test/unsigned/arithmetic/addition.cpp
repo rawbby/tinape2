@@ -1,7 +1,6 @@
 #include <common.hpp>
 #include <unsigned.hpp>
 
-#include <array>
 #include <cstdlib>
 #include <exception>
 
@@ -23,10 +22,14 @@ require(bool condition)
 void
 testExhaustiveAgainstReference()
 {
-  for (U32 lhs = 0U; lhs <= 0xFFU; ++lhs) {
-    for (U32 rhs = 0U; rhs <= 0xFFU; ++rhs) {
-      auto const sum = UnsignedBig{ static_cast<U8>(lhs) } + UnsignedBig{ static_cast<U8>(rhs) };
-      require(sum == lhs + rhs);
+  for (U32 lhs = 0U; lhs < 256; ++lhs) {
+    for (U32 rhs = 0U; rhs < 256; ++rhs) {
+      auto const bigLhs = UnsignedBig{ static_cast<U8>(lhs) };
+      auto const bigRhs = UnsignedBig{ static_cast<U8>(rhs) };
+      auto const bigRL  = bigLhs + bigRhs;
+      auto const bigLR  = bigLhs + bigRhs;
+      require(bigRL == rhs + lhs);
+      require(bigLR == lhs + rhs);
     }
   }
 }
@@ -54,11 +57,13 @@ testZeroIsIdentity()
 void
 testCommutativity()
 {
-  for (U32 lhs = 0U; lhs <= 0xFFU; lhs += 3U) {
-    for (U32 rhs = 0U; rhs <= 0xFFU; rhs += 7U) {
+  for (U32 lhs = 0U; lhs <= 256; lhs += 3U) {
+    for (U32 rhs = 0U; rhs <= 256; rhs += 7U) {
       auto const bigLhs = UnsignedBig{ static_cast<U8>(lhs) };
       auto const bigRhs = UnsignedBig{ static_cast<U8>(rhs) };
-      require(bigLhs + bigRhs == bigRhs + bigLhs);
+      auto const bigLR  = bigLhs + bigRhs;
+      auto const bigRL  = bigRhs + bigLhs;
+      require(bigLR == bigRL);
     }
   }
 }
@@ -67,20 +72,11 @@ testCommutativity()
 void
 testMultiElementCarryPropagation()
 {
-  constexpr auto allOnes  = UnsignedBig{ std::array{
-    0xFFFFFFFFU,
-    0xFFFFFFFFU,
-    0xFFFFFFFFU,
-    0xFFFFFFFFU,
-    0xFFFFFFFFU,
-    0xFFFFFFFFU,
-    0xFFFFFFFFU,
-    0xFFFFFFFFU,
-    0xFFFFFFFFU,
-  } };
-  constexpr auto expected = UnsignedBig{ std::array{ 0x0U, 0x0U, 0x0U, 0x0U, 0x0U, 0x0U, 0x0U, 0x0U, 0x0U, 0x1U } };
+  constexpr auto mask     = gMask<Limb>;
+  constexpr auto allOnes  = UnsignedBig{ Limbs<9>{ mask, mask, mask, mask, mask, mask, mask, mask, mask } };
+  constexpr auto expected = UnsignedBig{ Limbs<10>{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 } };
+  constexpr auto sum      = allOnes + gUnsignedBig<1>;
 
-  constexpr auto sum = allOnes + UnsignedBig<1>{ 1 };
   static_assert(decltype(sum)::gIsArrayData);
   static_assert(decltype(sum)::gBits == (9 * gBitsOf<U32>)+1);
   static_assert(sum.element(0) == 0U);

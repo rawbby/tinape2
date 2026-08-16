@@ -25,7 +25,17 @@ namespace impl {
 
 template<typename T>
 struct IsSignedBigHelper final : std::false_type
-{};
+{
+  constexpr static auto gBits     = gBitsOf<T>;
+  constexpr static auto gSignType = IsSignedIntegral<T> ? Runtime : Positive;
+};
+
+template<Size bits>
+struct IsSignedBigHelper<UnsignedBig<bits>> final : std::false_type
+{
+  constexpr static auto gBits     = UnsignedBig<bits>::gBits;
+  constexpr static auto gSignType = Positive;
+};
 
 template<SignType signType, Size bits>
 struct IsSignedBigHelper<SignedBig<signType, bits>> final : std::true_type
@@ -58,41 +68,5 @@ using CommonSignedBig = SignedBig<
         : SignType::Runtime,
     CommonUnsignedBig<typename Ts::UnsignedBig...>::gBits>;
 // clang-format on
-
-namespace impl {
-
-/// describes values a SignedBig is explicitly constructible from without runtime errors
-template<typename Value, SignType signType, Size bits>
-concept IsSignedBigInit = []() consteval -> bool {
-  using V = std::remove_cvref_t<Value>;
-
-  if constexpr (IsSignedBig<V>) {
-    return (signType == Runtime || signType == V::gSignType) && (V::gBits <= bits);
-  }
-
-  else if constexpr (IsUnsignedBig<V>) {
-    return IsUnsignedBigHelper<V>::gBits <= bits;
-  }
-
-  else if constexpr (IsUnsignedIntegral<V> || IsElements<V> || IsLimbs<V>) {
-    return gBitsOf<V> <= bits;
-  }
-
-  else if constexpr (IsSignedIntegral<V>) {
-    return (signType == Runtime) && (gBitsOf<V> - 1 <= bits);
-  }
-
-  return false;
-}();
-
-/// describes values a SignedBig is explicitly constructible from only at compile time
-/// these constructions are not generally safe, but can be checked at compile time to work for compile time values
-template<typename Value, SignType signType, Size bits>
-concept IsSignedBigConstevalInit = !IsSignedBigInit<Value, signType, bits> && []() consteval -> bool {
-  using V = std::remove_cvref_t<Value>;
-  return IsSignedBig<V> || IsUnsignedBig<V> || IsUnsignedIntegral<V> || IsSignedIntegral<V> || IsElements<V> || IsLimbs<V>;
-}();
-
-} // namespace impl
 
 } // namespace big

@@ -18,8 +18,8 @@ template<IsSignedBig ToSignedBig, SignType fromSignType, Size fromBits>
 [[nodiscard]] constexpr auto
 castBigUnsafe(SignedBig<fromSignType, fromBits> const& fromValue) -> ToSignedBig
 {
-  return {
-    castBigUnsafe<ToSignedBig::UnsignedBig>(fromValue.abs()),
+  return ToSignedBig{
+    castBigUnsafe<typename ToSignedBig::Unsigned>(fromValue.abs()),
     fromValue.sign(),
   };
 }
@@ -30,7 +30,7 @@ template<IsSignedBig ToSignedBig, SignType fromSignType, Size fromBits>
 [[nodiscard]] constexpr auto
 castBigSafe(SignedBig<fromSignType, fromBits> const& fromValue) -> std::optional<ToSignedBig>
 {
-  using ToUnsigned          = ToSignedBig::UnsignedBig;
+  using ToUnsigned          = ToSignedBig::Unsigned;
   constexpr auto toSignType = ToSignedBig::gSignType;
   constexpr auto toSign     = SignType::Positive == toSignType;
 
@@ -45,7 +45,7 @@ castBigSafe(SignedBig<fromSignType, fromBits> const& fromValue) -> std::optional
   // if compile time sign inequality NOLINTNEXTLINE(*-branch-clone)
   else if constexpr (SignType::Runtime != fromSignType && toSignType != fromSignType) {
     if (fromValue.abs() == 0) {
-      return ToSignedBig{ ToUnsigned{}, toSign };
+      return ToSignedBig{ gTag<toSignType>, ToUnsigned{} };
     }
     return std::nullopt;
   }
@@ -55,14 +55,14 @@ castBigSafe(SignedBig<fromSignType, fromBits> const& fromValue) -> std::optional
     // if runtime sign inequality
     if (toSign != fromValue.sign()) {
       if (fromValue.abs() == 0) {
-        return ToSignedBig{ ToUnsigned{}, toSign };
+        return ToSignedBig{ gTag<toSignType>, ToUnsigned{} };
       }
       return std::nullopt;
     }
 
     // if runtime sign equality
     if (auto const toAbs = castBigSafe<ToUnsigned>(fromValue.abs())) {
-      return ToSignedBig{ *toAbs, toSign };
+      return ToSignedBig{ gTag<toSignType>, *toAbs };
     }
     return std::nullopt;
   }

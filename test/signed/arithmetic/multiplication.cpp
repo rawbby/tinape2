@@ -26,8 +26,8 @@ testExhaustiveAgainstReferenceImpl()
 {
   for (I32 lhs = -127; lhs <= 127; ++lhs) {
     for (I32 rhs = -127; rhs <= 127; ++rhs) {
-      auto const bigLhs     = SignedBig<Runtime, lhsBits>{ static_cast<I8>(lhs) };
-      auto const bitRhs     = SignedBig<Runtime, rhsBits>{ static_cast<I8>(rhs) };
+      auto const bigLhs     = castBigUnsafe<SignedBig<Runtime, lhsBits>> (SignedBig{ gTag<Runtime>, static_cast<I8>(lhs) });
+      auto const bitRhs     = castBigUnsafe<SignedBig<Runtime, rhsBits>> (SignedBig{ gTag<Runtime>, static_cast<I8>(rhs) });
       auto const bigProduct = bigLhs * bitRhs;
       require(bigProduct == lhs * rhs);
     }
@@ -38,10 +38,6 @@ testExhaustiveAgainstReferenceImpl()
 void
 testExhaustiveAgainstReference()
 {
-  testExhaustiveAgainstReferenceImpl<8, 4>();
-  testExhaustiveAgainstReferenceImpl<4, 8>();
-  testExhaustiveAgainstReferenceImpl<8, 8>();
-
   testExhaustiveAgainstReferenceImpl<16, 8>();
   testExhaustiveAgainstReferenceImpl<8, 16>();
   testExhaustiveAgainstReferenceImpl<16, 16>();

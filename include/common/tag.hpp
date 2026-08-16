@@ -42,7 +42,7 @@
 // auto c = Container(gTag<1>, 3.14);
 // ```
 
-template<auto... /* values */>
+template<auto... /*values*/>
 struct Tag
 {};
 

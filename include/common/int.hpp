@@ -4,10 +4,11 @@
 
 #include <common/type_traits.hpp> // Is, IsAny
 
-#include <concepts>    // unsigned_integral, std::signed_integral
-#include <cstddef>     // std::ptrdiff_t
-#include <cstdint>     // std::uint8_t, std::uint16_t, std::uint32_t, std::uint64_t, std::int8_t, std::int16_t, std::int32_t, std::int64_t
-#include <cstdlib>     // std::size_t
+#include <concepts> // unsigned_integral, std::signed_integral
+#include <cstddef>  // std::ptrdiff_t
+#include <cstdint>  // std::uint8_t, std::uint16_t, std::uint32_t, std::uint64_t, std::int8_t, std::int16_t, std::int32_t, std::int64_t
+#include <cstdlib>  // std::size_t
+#include <stdexcept>
 #include <type_traits> // std::remove_cvref_t
 
 struct UnavailableIntegral;
@@ -63,7 +64,7 @@ template<typename T> concept IsUnsignedIntegral = std::unsigned_integral<std::re
 template<typename T> concept IsSignedIntegral   = std::signed_integral<std::remove_cvref_t<T>>   || IsAny<T,I8,I16,I32,I64> || IsI128<T>;
 template<typename T> concept IsIntegral         = IsUnsignedIntegral<T> || IsSignedIntegral<T>;
 
-template<typename T> constexpr auto gBytesOf = static_cast<Size>(sizeof(T));
+template<typename T> constexpr auto gBytesOf = static_cast<Size>(sizeof(std::remove_cvref_t<T>));
 template<typename T> constexpr auto gBitsOf  = static_cast<Size>(gBytesOf<T> << 3U);
 
 template<typename Value> constexpr auto bytesOf(Value /* value */) -> Size { return gBytesOf<Value>; }
@@ -129,8 +130,20 @@ using I =
   UnavailableIntegral>>>>>;
 // clang-format on
 
-template<IsIntegral T>
-using MakeUnsigned = U<gBitsOf<T>>;
+template<IsIntegral Value>
+using MakeUnsigned = U<gBitsOf<Value>>;
+
+template<IsIntegral Value>
+constexpr auto
+makeUnsigned(Value value) -> MakeUnsigned<Value>
+{
+  if (std::is_constant_evaluated()) {
+    if (value < 0) {
+      throw std::logic_error{ "undefined behaviour: can not cast negative value unsigned value" };
+    }
+  }
+  return static_cast<MakeUnsigned<Value>>(value);
+}
 
 namespace static_test {
 

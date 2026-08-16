@@ -10,7 +10,6 @@
 #include <common/mask.hpp>
 
 #include <algorithm>
-#include <array>
 #include <stdexcept>
 #include <type_traits>
 
@@ -30,13 +29,14 @@ operator+(UnsignedBig<lhsBits> const& lhs, UnsignedBig<rhsBits> const& rhs)
     using LhsType          = UnsignedBig<lhsBits>;
     using RhsType          = UnsignedBig<rhsBits>;
 
+    auto sum = ResType{};
+
     if constexpr (!ResType::gIsArrayData) {
-      return ResType{ static_cast<ResType::Data>(lhs.mData) + rhs.mData };
+      sum.mData = static_cast<ResType::Data>(static_cast<ResType::Data>(lhs.mData) + rhs.mData);
 
     } else {
       // NOLINTBEGIN(*-magic-numbers,*-identifier-length,*-unchecked-container-access)
 
-      auto sum   = ResType{};
       auto carry = Element{ 0 };
       auto i     = Size{ 0 };
 
@@ -58,10 +58,10 @@ operator+(UnsignedBig<lhsBits> const& lhs, UnsignedBig<rhsBits> const& rhs)
       if constexpr (ResType::gNumElements > LhsType::gNumElements) {
         sum.element(i, carry);
       }
-
-      return sum;
       // NOLINTEND(*-magic-numbers,*-identifier-length,*-unchecked-container-access)
     }
+
+    return sum;
   }
 }
 
@@ -81,14 +81,14 @@ operator-(UnsignedBig<lhsBits> const& lhs, UnsignedBig<rhsBits> const& rhs)
   using LhsType = UnsignedBig<lhsBits>;
   using RhsType = UnsignedBig<rhsBits>;
 
+  auto difference = ResType{};
+
   if constexpr (!ResType::gIsArrayData && !RhsType::gIsArrayData) {
-    return ResType{ static_cast<ResType::Data>(static_cast<ResType::Data>(lhs.mData) - static_cast<ResType::Data>(rhs.mData)) };
+    difference.mData = static_cast<ResType::Data>(static_cast<ResType::Data>(lhs.mData) - static_cast<ResType::Data>(rhs.mData));
 
   } else {
-    // NOLINTBEGIN(*-magic-numbers,*-identifier-length,*-unchecked-container-access)
-    auto difference = ResType{};
-    auto borrow     = Element{ 0 };
-    auto i          = Size{ 0 };
+    auto borrow = Element{ 0 }; // NOLINT(*-identifier-length)
+    auto i      = Size{ 0 };    // NOLINT(*-identifier-length)
 
     // loop common elements for all
     for (; i < std::min(LhsType::gNumElements, RhsType::gNumElements); ++i) {
@@ -96,19 +96,15 @@ operator-(UnsignedBig<lhsBits> const& lhs, UnsignedBig<rhsBits> const& rhs)
       difference.element(i, loHalf(differenceElement));
       borrow = hiHalf(differenceElement) & 1U;
     }
-
     // lhs tail for diff, rhs reads as zero
     for (; i < LhsType::gNumElements; ++i) {
       auto const differenceElement = static_cast<Wide>(lhs.element(i)) - borrow;
       difference.element(i, loHalf(differenceElement));
       borrow = hiHalf(differenceElement) & 1U;
     }
-
     // any rhs tail beyond lhs is discarded: the result wraps modulo 2^lhsBits
-
-    return difference;
-    // NOLINTEND(*-magic-numbers,*-identifier-length,*-unchecked-container-access)
   }
+  return difference;
 }
 
 template<Size lhsBits, Size rhsBits>
@@ -120,39 +116,42 @@ operator*(UnsignedBig<lhsBits> const& lhs, UnsignedBig<rhsBits> const& rhs)
   using LhsType          = UnsignedBig<lhsBits>;
   using RhsType          = UnsignedBig<rhsBits>;
 
+  auto product = ResType{};
+
   if constexpr (!ResType::gIsArrayData) {
-    return ResType{ static_cast<ResType::Data>(lhs.mData) * rhs.mData };
+    product.mData = static_cast<ResType::Data>(static_cast<ResType::Data>(lhs.mData) * rhs.mData);
 
   } else {
-    // NOLINTBEGIN(*-identifier-length,*-pointer-arithmetic,*-braces-around-statements)
+    // NOLINTBEGIN(*-pointer-arithmetic)
     constexpr auto lhsN     = LhsType::gNumElements;
     constexpr auto rhsN     = RhsType::gNumElements;
-    constexpr auto resN     = ResType::gNumElements;
-    constexpr auto n        = lhsN + rhsN;
-    constexpr auto scratchN = karatsuba::gScratchSize<n>;
+    constexpr auto productN = lhsN + rhsN;
+    constexpr auto scratchN = karatsuba::gScratchSize<productN>;
 
     // one up-front stack allocation holding operands, result and all scratch;
     // mulRec picks schoolbook or sub-quadratic O(N^1.58) karatsuba per size at compile time
-    auto buffer = std::array<Element, n * 2 + scratchN>{};
+    auto buffer = Elements<productN * 2 + scratchN>{};
 
-    auto* a = buffer.data();
-    for (Size i = 0; i < lhsN; ++i)
-      a[i] = lhs.element(i);
+    auto* pLhsBuffer = buffer.data();
+    for (Size i = 0; i < lhsN; ++i) {
+      pLhsBuffer[i] = lhs.element(i);
+    }
 
-    auto* b = a + lhsN;
-    for (Size i = 0; i < rhsN; ++i)
-      b[i] = rhs.element(i);
+    auto* pRhsBuffer = pLhsBuffer + lhsN;
+    for (Size i = 0; i < rhsN; ++i) {
+      pRhsBuffer[i] = rhs.element(i);
+    }
 
-    auto* res = b + rhsN;
-    karatsuba::mulRec<lhsN, rhsN>(a, b, res, res + n);
+    auto* pProductBuffer = pRhsBuffer + rhsN;
+    karatsuba::mulRec<lhsN, rhsN>(pLhsBuffer, pRhsBuffer, pProductBuffer, pProductBuffer + productN);
 
-    auto product = ResType{};
-    for (Size i = 0; i < resN; ++i)
-      product.element(i, res[i]);
+    for (Size i = 0; i < ResType::gNumElements; ++i) {
+      product.element(i, pProductBuffer[i]);
+    }
 
-    return product;
-    // NOLINTEND(*-identifier-length,*-pointer-arithmetic,*-braces-around-statements)
+    // NOLINTEND(*-pointer-arithmetic)
   }
+  return product;
 }
 
 template<typename Rhs>

@@ -28,7 +28,7 @@ operator+(SignedBig<lhsSignType, lhsBits> const& lhs, SignedBig<rhsSignType, rhs
 {
   // if compile time sign equality
   if constexpr (SignType::Runtime != lhsSignType && lhsSignType == rhsSignType) {
-    return SignedBig{ lhsSignType, lhs.abs() + rhs.abs() };
+    return SignedBig{ gTag<lhsSignType>, lhs.abs() + rhs.abs() };
 
   } else { // all other cases require runtime evaluation
 
@@ -99,13 +99,13 @@ constexpr auto
 operator*(SignedBig<lhsSignType, lhsBits> const& lhs, SignedBig<rhsSignType, rhsBits> const& rhs)
 {
   if constexpr (SignType::Runtime == lhsSignType || SignType::Runtime == rhsSignType) {
-    return SignedBig{ SignType::Runtime, lhs.abs() * rhs.abs(), lhs.sign() == rhs.sign() };
+    return SignedBig{ lhs.abs() * rhs.abs(), lhs.sign() == rhs.sign() };
 
   } else if constexpr (rhsSignType == lhsSignType) {
-    return SignedBig{ SignType::Positive, lhs.abs() * rhs.abs() };
+    return SignedBig{ gTag<SignType::Positive>, lhs.abs() * rhs.abs() };
 
   } else { // rhsSignType != lhsSignType
-    return SignedBig{ SignType::Negative, lhs.abs() * rhs.abs() };
+    return SignedBig{ gTag<SignType::Negative>, lhs.abs() * rhs.abs() };
   }
 }
 

@@ -12,6 +12,16 @@
 #include <type_traits>
 
 namespace big {
+namespace impl {
+/// describes values an UnsignedBig is explicitly constructible from
+template<typename Value, Size bits>
+concept IsUnsignedBigInit =
+  (IsUnsignedBig<Value> || IsUnsignedIntegral<Value> || IsElements<Value> || IsLimbs<Value>) && impl::IsUnsignedBigHelper<std::remove_cvref_t<Value>>::gBits <= bits;
+/// describes values an UnsignedBig is explicitly constructible from only at compile time
+/// these constructions are not generally safe, but can be checked at compile time to work for compile time values
+template<typename Value, Size bits>
+concept IsUnsignedBigConstevalInit = !IsUnsignedBigInit<Value, bits> && (IsUnsignedBig<Value> || IsIntegral<Value> || IsElements<Value> || IsLimbs<Value>);
+} // namespace impl
 
 template<Size bits>
 class UnsignedBig final
@@ -62,23 +72,25 @@ public:
   [[nodiscard]] constexpr auto element(Size index) const -> Element
     requires(!gIsZeroData);
 
+  constexpr void limb(Size limbIndex, Limb value)
+    requires(!gIsZeroData);
+
+  [[nodiscard]] constexpr auto limb(Size index) const -> Limb
+    requires(!gIsZeroData);
+
   constexpr static auto max() -> UnsignedBig;
 
-private:
-  template<bool skipCheck, IsUnsignedBig Value>
-  constexpr void set(Value const& value);
+  template<Size maskBits>
+  constexpr static auto hiMask() -> UnsignedBig;
 
-  template<bool skipCheck, IsIntegral Value>
-  constexpr void set(Value value);
+  template<Size maskBits>
+  constexpr static auto loMask() -> UnsignedBig;
 
-  template<bool skipCheck, Size size>
-  constexpr void set(Elements<size> const& elements);
+  constexpr auto operator&=(UnsignedBig const& rhs) -> UnsignedBig&;
 
-  template<bool skipCheck, Size size>
-    requires(!gLimbIsElement)
-  constexpr void set(Limbs<size> const& limbs);
+  constexpr auto operator|=(UnsignedBig const& rhs) -> UnsignedBig&;
 
-  constexpr void fillZero(Size offset = 0);
+  constexpr auto operator^=(UnsignedBig const& rhs) -> UnsignedBig&;
 };
 
 UnsignedBig() -> UnsignedBig<0>;
@@ -134,6 +146,22 @@ template<typename Lhs>
   requires(!IsUnsignedBig<Lhs>) && requires(Lhs const& lhs) { UnsignedBig{ lhs }; }
 constexpr auto
 operator*(Lhs const& lhs, IsUnsignedBig auto const& rhs);
+
+template<Size bits>
+constexpr auto
+operator&(UnsignedBig<bits> const& lhs, UnsignedBig<bits> const& rhs) -> UnsignedBig<bits>;
+
+template<Size bits>
+constexpr auto
+operator|(UnsignedBig<bits> const& lhs, UnsignedBig<bits> const& rhs) -> UnsignedBig<bits>;
+
+template<Size bits>
+constexpr auto
+operator^(UnsignedBig<bits> const& lhs, UnsignedBig<bits> const& rhs) -> UnsignedBig<bits>;
+
+template<Size bits>
+constexpr auto
+operator~(UnsignedBig<bits> const& lhs) -> UnsignedBig<bits>;
 
 template<IsUnsignedBig Lhs, IsUnsignedBig Rhs>
 constexpr auto

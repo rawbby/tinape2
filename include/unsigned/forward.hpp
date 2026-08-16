@@ -10,6 +10,9 @@
 
 namespace big {
 
+struct ZeroData
+{};
+
 using Element = std::conditional_t<gU128Supported, U64, U32>;
 using Wide    = std::conditional_t<gU128Supported, U128, U64>;
 using Limb    = U32;
@@ -41,7 +44,9 @@ class UnsignedBig;
 namespace impl {
 template<typename T>
 struct IsUnsignedBigHelper final : std::false_type
-{};
+{
+  constexpr static auto gBits = gBitsOf<T>;
+};
 
 template<Size bits>
 struct IsUnsignedBigHelper<UnsignedBig<bits>> final : std::true_type
@@ -50,7 +55,6 @@ struct IsUnsignedBigHelper<UnsignedBig<bits>> final : std::true_type
   constexpr static auto gNumElements = (bits + gElementBits - 1) / gElementBits;
 
   // clang-format off
-  struct ZeroData{};
   using Data = std::conditional_t<bits == 0, ZeroData,
                std::conditional_t<bits <= gU8Bits, U8,
                std::conditional_t<bits <= gU32Bits, U32,
@@ -85,33 +89,4 @@ concept IsUnsignedBig = impl::IsUnsignedBigHelper<std::remove_cvref_t<T>>::value
 /// a type that can be assigned safely from all the given unsigned types without truncation
 template<IsUnsignedBig... Args>
 using CommonUnsignedBig = UnsignedBig<std::max({ impl::IsUnsignedBigHelper<std::remove_cvref_t<Args>>::gBits... })>;
-
-namespace impl {
-
-/// describes values an UnsignedBig is explicitly constructible from
-template<typename Value, Size bits>
-concept IsUnsignedBigInit = []() consteval -> bool {
-  using V = std::remove_cvref_t<Value>;
-
-  if constexpr (IsUnsignedBig<V>) {
-    return IsUnsignedBigHelper<V>::gBits <= bits;
-  }
-
-  else if constexpr (IsUnsignedIntegral<V> || IsElements<V> || IsLimbs<V>) {
-    return gBitsOf<V> <= bits;
-  }
-
-  return false;
-}();
-
-/// describes values an UnsignedBig is explicitly constructible from only at compile time
-/// these constructions are not generally safe, but can be checked at compile time to work for compile time values
-template<typename Value, Size bits>
-concept IsUnsignedBigConstevalInit = !IsUnsignedBigInit<Value, bits> && []() consteval -> bool {
-  using V = std::remove_cvref_t<Value>;
-  return IsUnsignedBig<V> || IsUnsignedIntegral<V> || IsSignedIntegral<V> || IsElements<V> || IsLimbs<V>;
-}();
-
-} // namespace impl
-
 } // namespace big
