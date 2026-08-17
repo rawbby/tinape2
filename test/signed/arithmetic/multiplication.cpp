@@ -61,6 +61,28 @@ testSignRule()
   using NegativeSigned = SignedBig<Negative, 3>;
   using RuntimeSigned  = SignedBig<Runtime, 3>;
 
+  static_assert(PositiveSigned{ 3 }.abs() == 3);
+  static_assert(NegativeSigned{ 3 }.abs() == 3);
+  static_assert(RuntimeSigned{ 3 }.abs() == 3);
+  static_assert(RuntimeSigned{ -3 }.abs() == 3);
+
+  static_assert(PositiveSigned{ 3 }.sign());
+  static_assert(!NegativeSigned{ 3 }.sign());
+  static_assert(RuntimeSigned{ 3 }.sign());
+  static_assert(!RuntimeSigned{ -3 }.sign());
+
+  static_assert(PositiveSigned{ 3 } == 3);
+  static_assert(NegativeSigned{ 3 } == -3);
+  static_assert(RuntimeSigned{ 3 } == 3);
+  static_assert(RuntimeSigned{ -3 } == -3);
+
+  static_assert(PositiveSigned{ 3 } != NegativeSigned{ 3 });
+  static_assert(PositiveSigned{ 3 } == RuntimeSigned{ 3 });
+  static_assert(NegativeSigned{ 3 } != PositiveSigned{ 3 });
+  static_assert(NegativeSigned{ 3 } == RuntimeSigned{ -3 });
+  static_assert(RuntimeSigned{ 3 } == PositiveSigned{ 3 });
+  static_assert(RuntimeSigned{ -3 } == NegativeSigned{ 3 });
+
   static_assert(PositiveSigned{ 3 }.abs() == NegativeSigned{ 3 }.abs());
   static_assert(PositiveSigned{ 3 }.abs() == RuntimeSigned{ 3 }.abs());
   static_assert(NegativeSigned{ 3 }.abs() == PositiveSigned{ 3 }.abs());
@@ -72,13 +94,6 @@ testSignRule()
   static_assert(NegativeSigned{ 3 }.abs() == RuntimeSigned{ -3 }.abs());
   static_assert(RuntimeSigned{ -3 }.abs() == PositiveSigned{ 3 }.abs());
   static_assert(RuntimeSigned{ -3 }.abs() == NegativeSigned{ 3 }.abs());
-
-  static_assert(PositiveSigned{ 3 } == 3);
-  static_assert(NegativeSigned{ 3 } == -3);
-  static_assert(RuntimeSigned{ 3 } == 3);
-  static_assert(RuntimeSigned{ -3 } == -3);
-  static_assert(PositiveSigned{ 3 } == RuntimeSigned{ 3 });
-  static_assert(NegativeSigned{ 3 } == RuntimeSigned{ -3 });
 
   static_assert(PositiveSigned{ 3 } * PositiveSigned{ 4 } == 12);
   static_assert(NegativeSigned{ 3 } * PositiveSigned{ 4 } == -12);
