@@ -123,6 +123,11 @@ constexpr void
 SignedBig<signType, bits>::set(Value const& value, bool sign)
 {
   if (std::is_constant_evaluated()) {
+    if constexpr (signType != Runtime) {
+      if (value < 0) {
+        throw std::invalid_argument{ "non runtime signed big assumes positive parameter value" };
+      }
+    }
     if constexpr (signType == Positive) {
       if (!sign) {
         throw std::invalid_argument{ "positive sign type cannot hold negative values" };
@@ -137,7 +142,12 @@ SignedBig<signType, bits>::set(Value const& value, bool sign)
   if constexpr (signType == Runtime) {
     std::get<1>(mUnderlying) = sign;
   }
-  impl::set<false>(std::get<0>(mUnderlying), value);
+
+  if constexpr (IsSignedIntegral<Value>) {
+    impl::set<false>(std::get<0>(mUnderlying), makeUnsigned(value));
+  } else {
+    impl::set<false>(std::get<0>(mUnderlying), value);
+  }
 }
 
 } // namespace big

@@ -5,10 +5,8 @@
 #include <cstdlib>
 #include <exception>
 
-// NOLINTBEGIN(*-magic-numbers)
-
 namespace {
-
+// NOLINTBEGIN(*-magic-numbers)
 using namespace big;
 
 void
@@ -20,62 +18,91 @@ require(bool condition)
 }
 
 /// exhaustive signed 8 bit multiplication evaluated against the built in integer reference
-template<Size lhsBits, Size rhsBits>
-void
-testExhaustiveAgainstReferenceImpl()
-{
-  for (I32 lhs = -127; lhs <= 127; ++lhs) {
-    for (I32 rhs = -127; rhs <= 127; ++rhs) {
-      auto const bigLhs     = castBigUnsafe<SignedBig<Runtime, lhsBits>> (SignedBig{ gTag<Runtime>, static_cast<I8>(lhs) });
-      auto const bitRhs     = castBigUnsafe<SignedBig<Runtime, rhsBits>> (SignedBig{ gTag<Runtime>, static_cast<I8>(rhs) });
-      auto const bigProduct = bigLhs * bitRhs;
-      require(bigProduct == lhs * rhs);
-    }
-  }
-}
 
 /// exhaustive signed 8 bit multiplication evaluated against the built in integer reference
 void
 testExhaustiveAgainstReference()
 {
-  testExhaustiveAgainstReferenceImpl<16, 8>();
-  testExhaustiveAgainstReferenceImpl<8, 16>();
-  testExhaustiveAgainstReferenceImpl<16, 16>();
-
-  testExhaustiveAgainstReferenceImpl<32, 16>();
-  testExhaustiveAgainstReferenceImpl<16, 32>();
-  testExhaustiveAgainstReferenceImpl<32, 32>();
-
-  testExhaustiveAgainstReferenceImpl<64, 32>();
-  testExhaustiveAgainstReferenceImpl<32, 64>();
-  testExhaustiveAgainstReferenceImpl<64, 64>();
-
-  testExhaustiveAgainstReferenceImpl<128, 64>();
-  testExhaustiveAgainstReferenceImpl<64, 128>();
-  testExhaustiveAgainstReferenceImpl<128, 128>();
-
-  testExhaustiveAgainstReferenceImpl<256, 128>();
-  testExhaustiveAgainstReferenceImpl<128, 256>();
-  testExhaustiveAgainstReferenceImpl<256, 256>();
-
-  testExhaustiveAgainstReferenceImpl<512, 256>();
-  testExhaustiveAgainstReferenceImpl<256, 512>();
-  testExhaustiveAgainstReferenceImpl<512, 512>();
-
-  testExhaustiveAgainstReferenceImpl<1024, 1024>();
-  testExhaustiveAgainstReferenceImpl<2048, 1024>();
-  testExhaustiveAgainstReferenceImpl<1024, 2048>();
-  testExhaustiveAgainstReferenceImpl<2048, 2048>();
+  constexpr auto kernel = []<auto lhsBits, auto rhsBits>(Tag<lhsBits>, Tag<rhsBits>) {
+    constexpr auto end = static_cast<I32>(gLoMask<U8, 6>);
+    constexpr auto beg = -end;
+    for (auto lhs = beg; lhs <= end; lhs += 4) {
+      for (auto rhs = beg; rhs <= end; rhs += 8) {
+        auto const bigLhs = castBigUnsafe<SignedBig<Runtime, Size{ lhsBits }>>(SignedBig{ lhs });
+        auto const bigRhs = castBigUnsafe<SignedBig<Runtime, Size{ rhsBits }>>(SignedBig{ rhs });
+        require(bigLhs * bigRhs == lhs * rhs);
+        require(bigRhs * bigLhs == rhs * lhs);
+      }
+    }
+  };
+  kernel(gTag<6>, gTag<6>);
+  kernel(gTag<6>, gTag<8>);
+  kernel(gTag<8>, gTag<6>);
+  kernel(gTag<8>, gTag<8>);
+  kernel(gTag<32>, gTag<8>);
+  kernel(gTag<8>, gTag<32>);
+  kernel(gTag<32>, gTag<32>);
+  kernel(gTag<64>, gTag<32>);
+  kernel(gTag<32>, gTag<64>);
+  kernel(gTag<64>, gTag<64>);
+  kernel(gTag<128>, gTag<64>);
+  kernel(gTag<64>, gTag<128>);
+  kernel(gTag<128>, gTag<128>);
+  kernel(gTag<1024>, gTag<128>);
+  kernel(gTag<128>, gTag<1024>);
+  kernel(gTag<1024>, gTag<1024>);
 }
 
 /// the sign of the product must follow the sign rule
 void
 testSignRule()
 {
-  static_assert(SignedBig{ static_cast<I8>(3) } * SignedBig{ static_cast<I8>(4) } == 12);
-  static_assert(SignedBig{ static_cast<I8>(-3) } * SignedBig{ static_cast<I8>(4) } == -12);
-  static_assert(SignedBig{ static_cast<I8>(3) } * SignedBig{ static_cast<I8>(-4) } == -12);
-  static_assert(SignedBig{ static_cast<I8>(-3) } * SignedBig{ static_cast<I8>(-4) } == 12);
+  using PositiveSigned = SignedBig<Positive, 3>;
+  using NegativeSigned = SignedBig<Negative, 3>;
+  using RuntimeSigned  = SignedBig<Runtime, 3>;
+
+  static_assert(PositiveSigned{ 3 }.abs() == NegativeSigned{ 3 }.abs());
+  static_assert(PositiveSigned{ 3 }.abs() == RuntimeSigned{ 3 }.abs());
+  static_assert(NegativeSigned{ 3 }.abs() == PositiveSigned{ 3 }.abs());
+  static_assert(NegativeSigned{ 3 }.abs() == RuntimeSigned{ 3 }.abs());
+  static_assert(RuntimeSigned{ 3 }.abs() == PositiveSigned{ 3 }.abs());
+  static_assert(RuntimeSigned{ 3 }.abs() == NegativeSigned{ 3 }.abs());
+
+  static_assert(PositiveSigned{ 3 }.abs() == RuntimeSigned{ -3 }.abs());
+  static_assert(NegativeSigned{ 3 }.abs() == RuntimeSigned{ -3 }.abs());
+  static_assert(RuntimeSigned{ -3 }.abs() == PositiveSigned{ 3 }.abs());
+  static_assert(RuntimeSigned{ -3 }.abs() == NegativeSigned{ 3 }.abs());
+
+  static_assert(PositiveSigned{ 3 } == 3);
+  static_assert(NegativeSigned{ 3 } == -3);
+  static_assert(RuntimeSigned{ 3 } == 3);
+  static_assert(RuntimeSigned{ -3 } == -3);
+  static_assert(PositiveSigned{ 3 } == RuntimeSigned{ 3 });
+  static_assert(NegativeSigned{ 3 } == RuntimeSigned{ -3 });
+
+  static_assert(PositiveSigned{ 3 } * PositiveSigned{ 4 } == 12);
+  static_assert(NegativeSigned{ 3 } * PositiveSigned{ 4 } == -12);
+  static_assert(PositiveSigned{ 3 } * NegativeSigned{ 4 } == -12);
+  static_assert(NegativeSigned{ 3 } * NegativeSigned{ 4 } == 12);
+
+  // Positive -> Runtime
+  static_assert(RuntimeSigned{ 3 } * RuntimeSigned{ 4 } == 12);
+  static_assert(NegativeSigned{ 3 } * RuntimeSigned{ 4 } == -12);
+  static_assert(RuntimeSigned{ 3 } * NegativeSigned{ 4 } == -12);
+  static_assert(NegativeSigned{ 3 } * NegativeSigned{ 4 } == 12);
+
+  // Negative -> Runtime
+  static_assert(PositiveSigned{ 3 } * PositiveSigned{ 4 } == 12);
+  static_assert(RuntimeSigned{ -3 } * PositiveSigned{ 4 } == -12);
+  static_assert(PositiveSigned{ 3 } * RuntimeSigned{ -4 } == -12);
+  static_assert(RuntimeSigned{ -3 } * RuntimeSigned{ -4 } == 12);
+
+  // Negative -> Runtime
+  // Positive -> Runtime
+  static_assert(RuntimeSigned{ 3 } * RuntimeSigned{ 4 } == 12);
+  static_assert(RuntimeSigned{ -3 } * RuntimeSigned{ 4 } == -12);
+  static_assert(RuntimeSigned{ 3 } * RuntimeSigned{ -4 } == -12);
+  static_assert(RuntimeSigned{ -3 } * RuntimeSigned{ -4 } == 12);
 }
 
 /// multiplication by zero must yield zero regardless of sign
@@ -105,6 +132,7 @@ testHeterogeneousOperands()
   static_assert(2 * value == -42);
 }
 
+// NOLINTEND(*-magic-numbers)
 } // namespace
 
 int
@@ -120,5 +148,3 @@ main(int /* argc */, char** /* argv */)
     std::exit(1); // NOLINT(*-mt-unsafe)
   }
 }
-
-// NOLINTEND(*-magic-numbers)
