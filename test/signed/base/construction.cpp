@@ -11,6 +11,20 @@
 namespace {
 
 using namespace big;
+using PositiveSigned = SignedBig<Positive, 2>;
+using NegativeSigned = SignedBig<Negative, 2>;
+using RuntimeSigned  = SignedBig<Runtime, 2>;
+
+// NOLINTBEGIN(*-identifier-naming,*-err58-cpp)
+constexpr auto p3ct  = PositiveSigned{ 3 };
+constexpr auto n3ct  = NegativeSigned{ 3 };
+constexpr auto rp3ct = RuntimeSigned{ 3 };
+constexpr auto rn3ct = RuntimeSigned{ -3 };
+auto const     p3rt  = PositiveSigned{ 3 };
+auto const     n3rt  = NegativeSigned{ 3 };
+auto const     rp3rt = RuntimeSigned{ 3 };
+auto const     rn3rt = RuntimeSigned{ -3 };
+// NOLINTEND(*-identifier-naming,*-err58-cpp)
 
 void
 require(bool condition)
@@ -18,6 +32,193 @@ require(bool condition)
   if (!condition) {
     std::abort();
   }
+}
+
+void
+testConstructionAbs()
+{
+  {
+    constexpr auto p3ct2  = PositiveSigned{ p3ct };
+    constexpr auto n3ct2  = NegativeSigned{ n3ct };
+    constexpr auto rp3ct2 = RuntimeSigned{ p3ct };
+    constexpr auto rp3ct3 = RuntimeSigned{ rp3ct };
+    constexpr auto rn3ct2 = RuntimeSigned{ n3ct };
+    constexpr auto rn3ct3 = RuntimeSigned{ rn3ct };
+
+    static_assert(p3ct2.sign() == p3ct.sign());
+    static_assert(p3ct2.abs() == p3ct.abs());
+
+    static_assert(n3ct2.sign() == n3ct.sign());
+    static_assert(n3ct2.abs() == n3ct.abs());
+
+    static_assert(rp3ct2.sign() == p3ct.sign());
+    static_assert(rp3ct2.abs() == p3ct.abs());
+
+    static_assert(rp3ct3.sign() == rp3ct.sign());
+    static_assert(rp3ct3.abs() == rp3ct.abs());
+
+    static_assert(rn3ct2.sign() == n3ct.sign());
+    static_assert(rn3ct2.abs() == n3ct.abs());
+
+    static_assert(rn3ct3.sign() == rn3ct.sign());
+    static_assert(rn3ct3.abs() == rn3ct.abs());
+
+    static_assert(PositiveSigned{ p3ct }.sign() == p3ct.sign());
+    static_assert(PositiveSigned{ p3ct }.abs() == p3ct.abs());
+
+    static_assert(NegativeSigned{ n3ct }.sign() == n3ct.sign());
+    static_assert(NegativeSigned{ n3ct }.abs() == n3ct.abs());
+
+    static_assert(RuntimeSigned{ p3ct }.sign() == p3ct.sign());
+    static_assert(RuntimeSigned{ p3ct }.abs() == p3ct.abs());
+
+    static_assert(RuntimeSigned{ rp3ct }.sign() == rp3ct.sign());
+    static_assert(RuntimeSigned{ rp3ct }.abs() == rp3ct.abs());
+
+    static_assert(RuntimeSigned{ n3ct }.sign() == n3ct.sign());
+    static_assert(RuntimeSigned{ n3ct }.abs() == n3ct.abs());
+
+    static_assert(RuntimeSigned{ rn3ct }.sign() == rn3ct.sign());
+    static_assert(RuntimeSigned{ rn3ct }.abs() == rn3ct.abs());
+  }
+
+  {
+    static_assert(p3ct.sign());
+    static_assert(!n3ct.sign());
+    static_assert(rp3ct.sign());
+    static_assert(!rn3ct.sign());
+
+    static_assert(p3ct.abs() == 3);
+    static_assert(n3ct.abs() == 3);
+    static_assert(rp3ct.abs() == 3);
+    static_assert(rn3ct.abs() == 3);
+
+    static_assert(p3ct.abs() == p3ct.abs());
+    static_assert(p3ct.abs() == n3ct.abs());
+    static_assert(p3ct.abs() == rp3ct.abs());
+    static_assert(p3ct.abs() == rn3ct.abs());
+
+    static_assert(n3ct.abs() == p3ct.abs());
+    static_assert(n3ct.abs() == n3ct.abs());
+    static_assert(n3ct.abs() == rp3ct.abs());
+    static_assert(n3ct.abs() == rn3ct.abs());
+
+    static_assert(rp3ct.abs() == p3ct.abs());
+    static_assert(rp3ct.abs() == n3ct.abs());
+    static_assert(rp3ct.abs() == rp3ct.abs());
+    static_assert(rp3ct.abs() == rn3ct.abs());
+
+    static_assert(rn3ct.abs() == p3ct.abs());
+    static_assert(rn3ct.abs() == n3ct.abs());
+    static_assert(rn3ct.abs() == rp3ct.abs());
+    static_assert(rn3ct.abs() == rn3ct.abs());
+
+    static_assert(PositiveSigned{ 3 }.sign());
+    static_assert(!NegativeSigned{ 3 }.sign());
+    static_assert(RuntimeSigned{ 3 }.sign());
+    static_assert(!RuntimeSigned{ -3 }.sign());
+
+    static_assert(PositiveSigned{ 3 }.abs() == 3);
+    static_assert(NegativeSigned{ 3 }.abs() == 3);
+    static_assert(RuntimeSigned{ 3 }.abs() == 3);
+    static_assert(RuntimeSigned{ -3 }.abs() == 3);
+  }
+
+  {
+    auto const p3rt2  = PositiveSigned{ p3rt };
+    auto const n3rt2  = NegativeSigned{ n3rt };
+    auto const rp3rt2 = RuntimeSigned{ p3rt };
+    auto const rp3rt3 = RuntimeSigned{ rp3rt };
+    auto const rn3rt2 = RuntimeSigned{ n3rt };
+    auto const rn3rt3 = RuntimeSigned{ rn3rt };
+
+    require(p3rt2.sign() == p3rt.sign());
+    require(p3rt2.abs() == p3rt.abs());
+
+    require(n3rt2.sign() == n3rt.sign());
+    require(n3rt2.abs() == n3rt.abs());
+
+    require(rp3rt2.sign() == p3rt.sign());
+    require(rp3rt2.abs() == p3rt.abs());
+
+    require(rp3rt3.sign() == rp3rt.sign());
+    require(rp3rt3.abs() == rp3rt.abs());
+
+    require(rn3rt2.sign() == n3rt.sign());
+    require(rn3rt2.abs() == n3rt.abs());
+
+    require(rn3rt3.sign() == rn3rt.sign());
+    require(rn3rt3.abs() == rn3rt.abs());
+
+    require(PositiveSigned{ p3rt }.sign() == p3rt.sign());
+    require(PositiveSigned{ p3rt }.abs() == p3rt.abs());
+
+    require(NegativeSigned{ n3rt }.sign() == n3rt.sign());
+    require(NegativeSigned{ n3rt }.abs() == n3rt.abs());
+
+    require(RuntimeSigned{ p3rt }.sign() == p3rt.sign());
+    require(RuntimeSigned{ p3rt }.abs() == p3rt.abs());
+
+    require(RuntimeSigned{ rp3rt }.sign() == rp3rt.sign());
+    require(RuntimeSigned{ rp3rt }.abs() == rp3rt.abs());
+
+    require(RuntimeSigned{ n3rt }.sign() == n3rt.sign());
+    require(RuntimeSigned{ n3rt }.abs() == n3rt.abs());
+
+    require(RuntimeSigned{ rn3rt }.sign() == rn3rt.sign());
+    require(RuntimeSigned{ rn3rt }.abs() == rn3rt.abs());
+  }
+
+  {
+    require(p3rt.sign());
+    require(!n3rt.sign());
+    require(rp3rt.sign());
+    require(!rn3rt.sign());
+
+    require(p3rt.abs() == 3);
+    require(n3rt.abs() == 3);
+    require(rp3rt.abs() == 3);
+    require(rn3rt.abs() == 3);
+
+    require(p3rt.abs() == p3rt.abs());
+    require(p3rt.abs() == n3rt.abs());
+    require(p3rt.abs() == rp3rt.abs());
+    require(p3rt.abs() == rn3rt.abs());
+
+    require(n3rt.abs() == p3rt.abs());
+    require(n3rt.abs() == n3rt.abs());
+    require(n3rt.abs() == rp3rt.abs());
+    require(n3rt.abs() == rn3rt.abs());
+
+    require(rp3rt.abs() == p3rt.abs());
+    require(rp3rt.abs() == n3rt.abs());
+    require(rp3rt.abs() == rp3rt.abs());
+    require(rp3rt.abs() == rn3rt.abs());
+
+    require(rn3rt.abs() == p3rt.abs());
+    require(rn3rt.abs() == n3rt.abs());
+    require(rn3rt.abs() == rp3rt.abs());
+    require(rn3rt.abs() == rn3rt.abs());
+
+    require(PositiveSigned{ 3 }.sign());
+    require(!NegativeSigned{ 3 }.sign());
+    require(RuntimeSigned{ 3 }.sign());
+    require(!RuntimeSigned{ -3 }.sign());
+
+    require(PositiveSigned{ 3 }.abs() == 3);
+    require(NegativeSigned{ 3 }.abs() == 3);
+    require(RuntimeSigned{ 3 }.abs() == 3);
+    require(RuntimeSigned{ -3 }.abs() == 3);
+  }
+}
+
+void
+testConstructionSign()
+{
+  static_assert(PositiveSigned{ 3 }.sign());
+  static_assert(!NegativeSigned{ 3 }.sign());
+  static_assert(RuntimeSigned{ 3 }.sign());
+  static_assert(!RuntimeSigned{ -3 }.sign());
 }
 
 /// construction from unsigned integrals must store the exact absolute value
@@ -93,6 +294,7 @@ int
 main(int /* argc */, char** /* argv */)
 {
   try {
+
     testConstructionFromUnsignedStoresValue();
     testConstructionFromSignedSplitsSign();
     testConstructionWithExplicitSign();
