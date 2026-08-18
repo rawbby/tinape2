@@ -9,7 +9,7 @@
 #include <algorithm>
 
 namespace big::karatsuba {
-// NOLINTBEGIN(*-magic-numbers,*-identifier-length,*-pointer-arithmetic)
+// NOLINTBEGIN(*-magic-numbers,*-identifier-length,*-pointer-arithmetic,misc-redundant-expression)
 
 // scratch (in elements) needed by mulRec for operands of n total elements
 template<Size n>
@@ -141,5 +141,5 @@ mulRec(Element const* __restrict a, Element const* __restrict b, Element* __rest
   }
 }
 
-// NOLINTEND(*-magic-numbers,*-identifier-length,*-pointer-arithmetic)
+// NOLINTEND(*-magic-numbers,*-identifier-length,*-pointer-arithmetic,misc-redundant-expression)
 } // namespace big::karatsuba

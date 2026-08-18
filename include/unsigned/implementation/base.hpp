@@ -10,6 +10,7 @@
 #include <type_traits>
 
 namespace big {
+// NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
 namespace impl {
 
 template<Size bits>
@@ -320,4 +321,5 @@ UnsignedBig<bits>::max() -> UnsignedBig
   }
 }
 
+// NOLINTEND(cppcoreguidelines-pro-bounds-constant-array-index)
 } // namespace big

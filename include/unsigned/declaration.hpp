@@ -61,7 +61,7 @@ public:
   [[nodiscard]] constexpr auto element(Size index) const -> Element
     requires(!gIsZeroData);
 
-  constexpr void limb(Size limbIndex, Limb value)
+  constexpr void limb(Size limbIndex, Limb limb)
     requires(!gIsZeroData);
 
   [[nodiscard]] constexpr auto limb(Size index) const -> Limb
@@ -150,7 +150,7 @@ operator^(UnsignedBig<bits> const& lhs, UnsignedBig<bits> const& rhs) -> Unsigne
 
 template<Size bits>
 constexpr auto
-operator~(UnsignedBig<bits> const& lhs) -> UnsignedBig<bits>;
+operator~(UnsignedBig<bits> const& value) -> UnsignedBig<bits>;
 
 template<IsUnsignedBig Lhs, IsUnsignedBig Rhs>
 constexpr auto

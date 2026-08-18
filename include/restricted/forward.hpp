@@ -24,18 +24,18 @@ struct RestrictedBig;
 namespace impl {
 
 template<IsSignedBig auto bound>
-constexpr auto elementFloor = [] {
+constexpr auto gElementFloor = [] {
   if constexpr (bound == 0) {
     return gSignedBig<0>;
   } else {
-    constexpr Element lo = bound.abs().element(0);
+    constexpr auto lowVal = bound.abs().element(0);
     if constexpr (bound > 0) {
-      return gSignedBig<bound - lo>;
+      return gSignedBig<bound - lowVal>;
     } else { // bound < 0
-      if constexpr (lo == 0) {
+      if constexpr (lowVal == 0) {
         return gSignedBig<bound>;
       } else {
-        constexpr Element rem = static_cast<Element>(Element{ 0 } - lo);
+        constexpr auto rem = static_cast<Element>(Element{ 0 } - lowVal);
         return gSignedBig<bound - rem>;
       }
     }
@@ -50,7 +50,15 @@ struct IsRestrictedBigHelper final : std::true_type
   constexpr static auto gLb = lb;
   constexpr static auto gUb = ub;
 
-  constexpr static auto gSignType = (lb >= 0 ? SignType::Positive : (ub <= 0 ? SignType::Negative : SignType::Runtime));
+  constexpr static auto gSignType = [] {
+    if constexpr (lb >= 0) {
+      return SignType::Positive;
+    } else if constexpr (ub <= 0) {
+      return SignType::Negative;
+    } else {
+      return SignType::Runtime;
+    }
+  }();
 
   constexpr static auto gSpan     = ub - lb;
   constexpr static auto gSpanBits = decltype(gUnsignedBig<gSpan.abs()>)::gBits;
@@ -72,7 +80,7 @@ struct IsRestrictedBigHelper final : std::true_type
     } else if constexpr (gMode == RestrictedMode::ExactShift) {
       return lb;
     } else {
-      return elementFloor<lb>;
+      return gElementFloor<lb>;
     }
   }();
 

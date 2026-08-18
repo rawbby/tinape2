@@ -61,4 +61,32 @@ template<typename Value>
   requires(impl::TypeBoundHelper<std::remove_cvref_t<Value>>::value && !IsRestrictedBig<Value>)
 RestrictedBig(Value const&) -> RestrictedBig<impl::TypeBoundHelper<std::remove_cvref_t<Value>>::gLb, impl::TypeBoundHelper<std::remove_cvref_t<Value>>::gUb>;
 
+template<IsRestrictedBig Lhs, IsRestrictedBig Rhs>
+constexpr auto
+operator<=>(Lhs const& lhs, Rhs const& rhs) -> std::strong_ordering;
+
+template<IsRestrictedBig Lhs, IsRestrictedBig Rhs>
+constexpr auto
+operator==(Lhs const& lhs, Rhs const& rhs) -> bool;
+
+template<typename Rhs>
+  requires(!IsRestrictedBig<Rhs>) && requires(Rhs const& rhs) { RestrictedBig{ rhs }; }
+constexpr auto
+operator<=>(IsRestrictedBig auto const& lhs, Rhs const& rhs);
+
+template<typename Lhs>
+  requires(!IsRestrictedBig<Lhs>) && requires(Lhs const& lhs) { RestrictedBig{ lhs }; }
+constexpr auto
+operator<=>(Lhs const& lhs, IsRestrictedBig auto const& rhs);
+
+template<typename Rhs>
+  requires(!IsRestrictedBig<Rhs>) && requires(Rhs const& rhs) { RestrictedBig{ rhs }; }
+constexpr auto
+operator==(IsRestrictedBig auto const& lhs, Rhs const& rhs);
+
+template<typename Lhs>
+  requires(!IsRestrictedBig<Lhs>) && requires(Lhs const& lhs) { RestrictedBig{ lhs }; }
+constexpr auto
+operator==(Lhs const& lhs, IsRestrictedBig auto const& rhs);
+
 } // namespace big
