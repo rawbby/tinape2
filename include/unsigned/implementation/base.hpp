@@ -22,7 +22,10 @@ fillZero(UnsignedBig<bits>& self, Size elementOffset)
     if (elementOffset == 0) {
       self.mData = static_cast<Self::Data>(0);
     } else if constexpr (Self::gNumElements > 1) {
-      self.element(1, static_cast<Element>(0));
+      // only the elements starting at the offset must be cleared
+      if (elementOffset == 1) {
+        self.element(1, static_cast<Element>(0));
+      }
     }
   }
 
