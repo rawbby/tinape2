@@ -145,7 +145,7 @@ set(UnsignedBig<bits>& self, Value const& value)
 } // namespace impl
 
 template<Size bits>
-template<impl::IsUnsignedBigInit<bits> Value>
+template<impl::IsUnsignedBigRhs<bits> Value>
   requires(!Is<Value, UnsignedBig<bits>>)
 constexpr UnsignedBig<bits>::UnsignedBig(Value&& value)
 {
@@ -153,7 +153,7 @@ constexpr UnsignedBig<bits>::UnsignedBig(Value&& value)
 }
 
 template<Size bits>
-template<impl::IsUnsignedBigInit<bits> Value>
+template<impl::IsUnsignedBigRhs<bits> Value>
   requires(!Is<Value, UnsignedBig<bits>>)
 constexpr auto
 UnsignedBig<bits>::operator=(Value&& value) -> UnsignedBig&
@@ -163,7 +163,7 @@ UnsignedBig<bits>::operator=(Value&& value) -> UnsignedBig&
 }
 
 template<Size bits>
-template<impl::IsUnsignedBigConstevalInit<bits> Value>
+template<impl::IsUnsignedBigConstevalRhs<bits> Value>
   requires(!Is<Value, UnsignedBig<bits>>)
 consteval UnsignedBig<bits>::UnsignedBig(Value&& value)
 {
@@ -171,7 +171,7 @@ consteval UnsignedBig<bits>::UnsignedBig(Value&& value)
 }
 
 template<Size bits>
-template<impl::IsUnsignedBigConstevalInit<bits> Value>
+template<impl::IsUnsignedBigConstevalRhs<bits> Value>
   requires(!Is<Value, UnsignedBig<bits>>)
 consteval auto
 UnsignedBig<bits>::operator=(Value&& value) -> UnsignedBig&

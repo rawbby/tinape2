@@ -12,17 +12,6 @@
 #include <type_traits>
 
 namespace big {
-namespace impl {
-/// describes values an UnsignedBig is explicitly constructible from
-template<typename Value, Size bits>
-concept IsUnsignedBigInit =
-  (IsUnsignedBig<Value> || IsUnsignedIntegral<Value> || IsElements<Value> || IsLimbs<Value>) && impl::IsUnsignedBigHelper<std::remove_cvref_t<Value>>::gBits <= bits;
-/// describes values an UnsignedBig is explicitly constructible from only at compile time
-/// these constructions are not generally safe, but can be checked at compile time to work for compile time values
-template<typename Value, Size bits>
-concept IsUnsignedBigConstevalInit = !IsUnsignedBigInit<Value, bits> && (IsUnsignedBig<Value> || IsIntegral<Value> || IsElements<Value> || IsLimbs<Value>);
-} // namespace impl
-
 template<Size bits>
 class UnsignedBig final
 {
@@ -50,19 +39,19 @@ public:
   constexpr auto operator=(UnsignedBig const& other) -> UnsignedBig&     = default;
   constexpr auto operator=(UnsignedBig&& other) noexcept -> UnsignedBig& = default;
 
-  template<impl::IsUnsignedBigInit<bits> Value>
+  template<impl::IsUnsignedBigRhs<bits> Value>
     requires(!Is<Value, UnsignedBig<bits>>)
   constexpr explicit UnsignedBig(Value&& value);
 
-  template<impl::IsUnsignedBigInit<bits> Value>
+  template<impl::IsUnsignedBigRhs<bits> Value>
     requires(!Is<Value, UnsignedBig<bits>>)
   constexpr auto operator=(Value&& value) -> UnsignedBig&;
 
-  template<impl::IsUnsignedBigConstevalInit<bits> Value>
+  template<impl::IsUnsignedBigConstevalRhs<bits> Value>
     requires(!Is<Value, UnsignedBig<bits>>)
   consteval explicit UnsignedBig(Value&& value);
 
-  template<impl::IsUnsignedBigConstevalInit<bits> Value>
+  template<impl::IsUnsignedBigConstevalRhs<bits> Value>
     requires(!Is<Value, UnsignedBig<bits>>)
   consteval auto operator=(Value&& value) -> UnsignedBig&;
 

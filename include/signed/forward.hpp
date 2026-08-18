@@ -55,6 +55,36 @@ struct IsSignedBigHelper<SignedBig<signType, bits>> final : std::true_type
   constexpr static auto gSignType      = signType;
 };
 
+/// concept for all runtime initializers to signed big
+template<typename Value, SignType signType, Size bits>
+concept IsSignedBigRhs =
+  // comaptible signed big
+  (impl::IsSignedBigHelper<std::remove_cvref_t<Value>>::value &&
+   // with compatible sign
+   (impl::IsSignedBigHelper<std::remove_cvref_t<Value>>::gSignType == signType || Runtime == signType) &&
+   // with compatible bits
+   impl::IsSignedBigHelper<std::remove_cvref_t<Value>>::gSignType <= bits) ||
+
+  // or compatible unsigned big or native type
+  ((IsUnsignedBig<Value> || IsUnsignedIntegral<Value> || IsElements<Value> || IsLimbs<Value>) &&
+   // with compatible bits
+   impl::IsSignedBigHelper<std::remove_cvref_t<Value>>::gBits <= bits) ||
+
+  // or compatible signed native type
+  (IsSignedIntegral<Value> &&
+   // with runtime sign
+   signType == Runtime &&
+   // with compatible bits
+   impl::IsSignedBigHelper<std::remove_cvref_t<Value>>::gBits - 1 <= bits);
+
+/// concept for all consteval but not runtime initializers to signed big
+template<typename Value, SignType signType, Size bits>
+concept IsSignedBigConstevalRhs =
+  // non-runtime compatible type
+  !IsSignedBigRhs<Value, signType, bits> &&
+  // compatible signed big, unsigned big or native type
+  (impl::IsSignedBigHelper<std::remove_cvref_t<Value>>::value || IsUnsignedBig<Value> || IsIntegral<Value> || IsElements<Value> || IsLimbs<Value>);
+
 } // namespace impl
 
 template<typename T>

@@ -80,6 +80,24 @@ struct IsUnsignedBigHelper<UnsignedBig<bits>> final : std::true_type
   static_assert(!gIsWideData || gNumElements == 2);
 };
 
+/// concept for all runtime initializers to unsigned big
+template<typename Value, Size bits>
+concept IsUnsignedBigRhs =
+  // compatible unsigned big
+  (impl::IsUnsignedBigHelper<std::remove_cvref_t<Value>>::value
+   // or compatible native type
+   || IsUnsignedIntegral<Value> || IsElements<Value> || IsLimbs<Value>)
+  // with compatible bits
+  &&impl::IsUnsignedBigHelper<std::remove_cvref_t<Value>>::gBits <= bits;
+
+/// concept for all consteval but not runtime initializers to unsigned big
+template<typename Value, Size bits>
+concept IsUnsignedBigConstevalRhs =
+  // non-runtime compatible
+  !IsUnsignedBigRhs<Value, bits> &&
+  // compatible unsigned big or native type
+  (impl::IsUnsignedBigHelper<std::remove_cvref_t<Value>>::value || IsIntegral<Value> || IsElements<Value> || IsLimbs<Value>);
+
 } // namespace impl
 
 /// exact match to use with auto to only accept exact match

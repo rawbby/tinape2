@@ -12,21 +12,6 @@
 #include <type_traits>
 
 namespace big {
-namespace impl {
-/// describes values a SignedBig is explicitly constructible from without runtime errors
-template<typename Value, SignType signType, Size bits>
-concept IsSignedBigInit =
-  (impl::IsSignedBigHelper<std::remove_cvref_t<Value>>::value && (signType == Runtime || signType == impl::IsSignedBigHelper<std::remove_cvref_t<Value>>::gSignType) &&
-   (impl::IsSignedBigHelper<std::remove_cvref_t<Value>>::gSignType <= bits)) ||
-  ((IsUnsignedBig<Value> || IsUnsignedIntegral<Value> || IsElements<Value> || IsLimbs<Value>) && impl::IsSignedBigHelper<std::remove_cvref_t<Value>>::gBits <= bits) ||
-  ((IsSignedIntegral<Value>) && (signType == Runtime) && (impl::IsSignedBigHelper<std::remove_cvref_t<Value>>::gBits - 1 <= bits));
-/// describes values a SignedBig is explicitly constructible from only at compile time
-/// these constructions are not generally safe, but can be checked at compile time to work for compile time values
-template<typename Value, SignType signType, Size bits>
-concept IsSignedBigConstevalInit =
-  !IsSignedBigInit<Value, signType, bits> && (IsSignedBig<Value> || IsUnsignedBig<Value> || IsIntegral<Value> || IsElements<Value> || IsLimbs<Value>);
-} // namespace impl
-
 template<SignType signType, Size bits>
 class SignedBig
 {
@@ -57,35 +42,35 @@ public:
   constexpr auto operator=(SignedBig&&) -> SignedBig&      = default;
   constexpr auto operator=(SignedBig const&) -> SignedBig& = default;
 
-  template<impl::IsSignedBigInit<signType, bits> Value>
+  template<impl::IsSignedBigRhs<signType, bits> Value>
     requires(!Is<Value, SignedBig<signType, bits>>)
   constexpr explicit SignedBig(Value&& value);
 
-  template<impl::IsSignedBigInit<signType, bits> Value>
+  template<impl::IsSignedBigRhs<signType, bits> Value>
     requires(!Is<Value, SignedBig<signType, bits>>)
   constexpr explicit SignedBig(Tag<signType> /*tag*/, Value&& value);
 
-  template<impl::IsSignedBigInit<signType, bits> Value>
+  template<impl::IsSignedBigRhs<signType, bits> Value>
     requires(signType == Runtime)
   constexpr explicit SignedBig(Value&& value, bool sign);
 
-  template<impl::IsSignedBigInit<signType, bits> Value>
+  template<impl::IsSignedBigRhs<signType, bits> Value>
     requires(!Is<Value, SignedBig<signType, bits>>)
   constexpr auto operator=(Value&& value) -> SignedBig&;
 
-  template<impl::IsSignedBigConstevalInit<signType, bits> Value>
+  template<impl::IsSignedBigConstevalRhs<signType, bits> Value>
     requires(!Is<Value, SignedBig<signType, bits>>)
   consteval explicit SignedBig(Value&& value);
 
-  template<impl::IsSignedBigConstevalInit<signType, bits> Value>
+  template<impl::IsSignedBigConstevalRhs<signType, bits> Value>
     requires(!Is<Value, SignedBig<signType, bits>>)
   consteval explicit SignedBig(Tag<signType> /*tag*/, Value&& value);
 
-  template<impl::IsSignedBigConstevalInit<signType, bits> Value>
+  template<impl::IsSignedBigConstevalRhs<signType, bits> Value>
     requires(signType == Runtime)
   consteval explicit SignedBig(Value&& value, bool sign);
 
-  template<impl::IsSignedBigConstevalInit<signType, bits> Value>
+  template<impl::IsSignedBigConstevalRhs<signType, bits> Value>
     requires(!Is<Value, SignedBig<signType, bits>>)
   consteval auto operator=(Value&& value) -> SignedBig&;
 
