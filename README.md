@@ -9,12 +9,11 @@ I am implementing a layered set of numeric core types:
 * **UnsignedBig**: A compile-time-growing big integer type that never overflows as long as it is not cast to a smaller
   type. Due to its compile-time-growing nature, it cannot be used in summation loops without explicit casting.
 * **SignedBig**: An extension of `UnsignedBig` that carries an additional sign bit.
-* **RestrictedUnsigned**: Based on `UnsignedBig`, this type uses lower and upper bounds instead of the worst-case bit
-  width. This saves bits at compile time and should be preferred where applicable.
-* **RestrictedSigned**: An extension of `RestrictedUnsigned` that carries an additional sign bit.
-* **UnsignedFixed:** Uses RestrictedUnsigned to store minimal bits while tracking an exponent for fixed-point
-  arithmetic, allowing fixed-point operations to be performed without loss of precision.
-* **SignedFixed:** An extension of UnsignedFixed that carries an additional sign bit.
+* **RestrictedBig**: An interval-typed integer parameterized by lower and upper bounds (`RestrictedBig<lb, ub>`).
+  Signedness is derived directly from the bounds rather than an independent type axis. Bounds are pure compile-time
+  functions of operand bounds, so accumulation loops require an explicit cast by design.
+* **FixedBig**: Stored over a `RestrictedBig` mantissa with an explicit exponent (`FixedBig<bits, shift>`), so the
+  exponent logic is the only concern managed by this layer while inheriting exact bound tracking.
 * **Rational**: A wrapper for formulas used to enable division when formulating equations. Divisions are optimized away
   by transforming them using cross-multiplication rules. Rationals are generally used to formulate equations that
   ultimately result in comparisons.
