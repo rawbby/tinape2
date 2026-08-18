@@ -64,8 +64,16 @@ set(SignedBig<signType, bits>& self, Value value)
   }
 }
 
+template<IsSignedBig Value, SignType signType, Size bits>
+constexpr void
+set(SignedBig<signType, bits>& self, Value const& value)
+{
+  // a signed big carries its own sign which must be preserved instead of being taken from the target type
+  set(self, value.abs(), value.sign());
+}
+
 template<typename Value, SignType signType, Size bits>
-  requires(!IsSignedIntegral<Value>)
+  requires(!IsSignedIntegral<Value> && !IsSignedBig<Value>)
 constexpr void
 set(SignedBig<signType, bits>& self, Value const& value)
 {

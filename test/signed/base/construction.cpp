@@ -175,10 +175,10 @@ testConstructionAbs()
     require(rp3rt.sign());
     require(!rn3rt.sign());
 
-    require(p3rt.abs() == 3);
-    require(n3rt.abs() == 3);
-    require(rp3rt.abs() == 3);
-    require(rn3rt.abs() == 3);
+    require(p3rt.abs() == 3U);
+    require(n3rt.abs() == 3U);
+    require(rp3rt.abs() == 3U);
+    require(rn3rt.abs() == 3U);
 
     require(p3rt.abs() == p3rt.abs());
     require(p3rt.abs() == n3rt.abs());
@@ -205,10 +205,10 @@ testConstructionAbs()
     require(RuntimeSigned{ 3 }.sign());
     require(!RuntimeSigned{ -3 }.sign());
 
-    require(PositiveSigned{ 3 }.abs() == 3);
-    require(NegativeSigned{ 3 }.abs() == 3);
-    require(RuntimeSigned{ 3 }.abs() == 3);
-    require(RuntimeSigned{ -3 }.abs() == 3);
+    require(PositiveSigned{ 3 }.abs() == 3U);
+    require(NegativeSigned{ 3 }.abs() == 3U);
+    require(RuntimeSigned{ 3 }.abs() == 3U);
+    require(RuntimeSigned{ -3 }.abs() == 3U);
   }
 }
 
@@ -294,7 +294,8 @@ int
 main(int /* argc */, char** /* argv */)
 {
   try {
-
+    testConstructionAbs();
+    testConstructionSign();
     testConstructionFromUnsignedStoresValue();
     testConstructionFromSignedSplitsSign();
     testConstructionWithExplicitSign();
