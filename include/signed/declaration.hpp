@@ -9,7 +9,6 @@
 
 #include <compare>
 #include <optional>
-#include <type_traits>
 
 namespace big {
 template<SignType signType, Size bits>
