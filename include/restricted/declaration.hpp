@@ -21,6 +21,44 @@ struct RestrictedBig
   constexpr static auto gBits     = Storage::gBits;
 
   [[no_unique_address]] Storage mStorage{};
+
+  constexpr RestrictedBig()                     = default;
+  constexpr ~RestrictedBig()                    = default;
+  constexpr RestrictedBig(RestrictedBig&&)      = default;
+  constexpr RestrictedBig(RestrictedBig const&) = default;
+
+  constexpr auto operator=(RestrictedBig&&) -> RestrictedBig&      = default;
+  constexpr auto operator=(RestrictedBig const&) -> RestrictedBig& = default;
+
+  template<impl::IsRestrictedBigRhs<lb, ub> Value>
+    requires(!Is<Value, RestrictedBig<lb, ub>>)
+  constexpr explicit RestrictedBig(Value&& value);
+
+  template<impl::IsRestrictedBigRhs<lb, ub> Value>
+    requires(!Is<Value, RestrictedBig<lb, ub>>)
+  constexpr auto operator=(Value&& value) -> RestrictedBig&;
+
+  template<impl::IsRestrictedBigConstevalRhs<lb, ub> Value>
+    requires(!Is<Value, RestrictedBig<lb, ub>>)
+  consteval explicit RestrictedBig(Value&& value);
+
+  template<impl::IsRestrictedBigConstevalRhs<lb, ub> Value>
+    requires(!Is<Value, RestrictedBig<lb, ub>>)
+  consteval auto operator=(Value&& value) -> RestrictedBig&;
+
+  [[nodiscard]] constexpr auto absolute() const -> Absolute;
+  [[nodiscard]] constexpr auto sign() const -> bool;
+  constexpr static auto        min() -> RestrictedBig;
+  constexpr static auto        max() -> RestrictedBig;
 };
+
+RestrictedBig() -> RestrictedBig<gSignedBig<0>, gSignedBig<0>>;
+
+template<IsRestrictedBig Value>
+RestrictedBig(Value const&) -> RestrictedBig<Value::gLb, Value::gUb>;
+
+template<typename Value>
+  requires(impl::TypeBoundHelper<std::remove_cvref_t<Value>>::value && !IsRestrictedBig<Value>)
+RestrictedBig(Value const&) -> RestrictedBig<impl::TypeBoundHelper<std::remove_cvref_t<Value>>::gLb, impl::TypeBoundHelper<std::remove_cvref_t<Value>>::gUb>;
 
 } // namespace big

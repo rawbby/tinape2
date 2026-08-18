@@ -107,4 +107,95 @@ concept IsRestrictedBig = impl::IsRestrictedBigType<std::remove_cvref_t<T>>::val
 template<IsRestrictedBig... Ts>
 using CommonRestrictedBig = RestrictedBig<gMin<impl::IsRestrictedBigType<std::remove_cvref_t<Ts>>::gLb...>, gMax<impl::IsRestrictedBigType<std::remove_cvref_t<Ts>>::gUb...>>;
 
+namespace impl {
+
+template<typename T>
+struct TypeBoundHelper final : std::false_type
+{};
+
+template<IsSignedBig auto lb, IsSignedBig auto ub>
+struct TypeBoundHelper<RestrictedBig<lb, ub>> final : std::true_type
+{
+  constexpr static auto gLb = lb;
+  constexpr static auto gUb = ub;
+};
+
+template<SignType signType, Size bits>
+struct TypeBoundHelper<SignedBig<signType, bits>> final : std::true_type
+{
+  constexpr static auto gLb = [] {
+    if constexpr (signType == SignType::Positive || bits == 0) {
+      return gSignedBig<0>;
+    } else {
+      return SignedBig<SignType::Negative, bits>{ gTag<SignType::Negative>, UnsignedBig<bits>::max() };
+    }
+  }();
+  constexpr static auto gUb = [] {
+    if constexpr (signType == SignType::Negative || bits == 0) {
+      return gSignedBig<0>;
+    } else {
+      return SignedBig<SignType::Positive, bits>{ gTag<SignType::Positive>, UnsignedBig<bits>::max() };
+    }
+  }();
+};
+
+template<Size bits>
+struct TypeBoundHelper<UnsignedBig<bits>> final : std::true_type
+{
+  constexpr static auto gLb = gSignedBig<0>;
+  constexpr static auto gUb = [] {
+    if constexpr (bits == 0) {
+      return gSignedBig<0>;
+    } else {
+      return SignedBig<SignType::Positive, bits>{ gTag<SignType::Positive>, UnsignedBig<bits>::max() };
+    }
+  }();
+};
+
+template<Size size>
+struct TypeBoundHelper<Elements<size>> final : std::true_type
+{
+  constexpr static auto gBits = size * gElementBits;
+  constexpr static auto gLb   = gSignedBig<0>;
+  constexpr static auto gUb   = SignedBig<SignType::Positive, gBits>{ gTag<SignType::Positive>, UnsignedBig<gBits>::max() };
+};
+
+template<Size size>
+  requires(!gLimbIsElement)
+struct TypeBoundHelper<Limbs<size>> final : std::true_type
+{
+  constexpr static auto gBits = size * gLimbBits;
+  constexpr static auto gLb   = gSignedBig<0>;
+  constexpr static auto gUb   = SignedBig<SignType::Positive, gBits>{ gTag<SignType::Positive>, UnsignedBig<gBits>::max() };
+};
+
+template<IsUnsignedIntegral T>
+struct TypeBoundHelper<T> final : std::true_type
+{
+  using CleanT                = std::remove_cvref_t<T>;
+  constexpr static auto gBits = gBitsOf<CleanT>;
+  constexpr static auto gLb   = gSignedBig<0>;
+  constexpr static auto gUb   = SignedBig<SignType::Positive, gBits>{ gTag<SignType::Positive>, UnsignedBig<gBits>::max() };
+};
+
+template<IsSignedIntegral T>
+struct TypeBoundHelper<T> final : std::true_type
+{
+  using CleanT                = std::remove_cvref_t<T>;
+  constexpr static auto gBits = gBitsOf<CleanT> - 1;
+  constexpr static auto gLb   = SignedBig<SignType::Negative, gBits>{ gTag<SignType::Negative>, UnsignedBig<gBits>::max() };
+  constexpr static auto gUb   = SignedBig<SignType::Positive, gBits>{ gTag<SignType::Positive>, UnsignedBig<gBits>::max() };
+};
+
+/// concept for all runtime initializers to restricted big
+template<typename Value, auto lb, auto ub>
+concept IsRestrictedBigRhs =
+  TypeBoundHelper<std::remove_cvref_t<Value>>::value && TypeBoundHelper<std::remove_cvref_t<Value>>::gLb >= lb && TypeBoundHelper<std::remove_cvref_t<Value>>::gUb <= ub;
+
+/// concept for all consteval but not runtime initializers to restricted big
+template<typename Value, auto lb, auto ub>
+concept IsRestrictedBigConstevalRhs = !IsRestrictedBigRhs<Value, lb, ub> && TypeBoundHelper<std::remove_cvref_t<Value>>::value;
+
+} // namespace impl
+
 } // namespace big

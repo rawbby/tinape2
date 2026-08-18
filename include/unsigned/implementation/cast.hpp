@@ -18,20 +18,21 @@ template<IsUnsignedBig ToUnsignedBig, IsUnsignedBig FromUnsignedBig>
 [[nodiscard]] constexpr auto
 castBigUnsafe(FromUnsignedBig const& value) -> ToUnsignedBig
 {
-  if (FromUnsignedBig::gNumElements == 0 || ToUnsignedBig::gNumElements == 0) {
+  if constexpr (FromUnsignedBig::gNumElements == 0 || ToUnsignedBig::gNumElements == 0) {
     return ToUnsignedBig{};
-  }
 
-  constexpr auto backIndex = std::min(ToUnsignedBig::gNumElements, FromUnsignedBig::gNumElements) - 1;
-  constexpr auto maskBits  = ToUnsignedBig::gBits % gElementBits;
-  constexpr auto mask      = maskBits == 0 ? ~Element{ 0 } : (Element{ 1 } << maskBits) - 1;
+  } else {
+    constexpr auto backIndex = std::min(ToUnsignedBig::gNumElements, FromUnsignedBig::gNumElements) - 1;
+    constexpr auto maskBits  = ToUnsignedBig::gBits % gElementBits;
+    constexpr auto mask      = maskBits == 0 ? ~Element{ 0 } : (Element{ 1 } << maskBits) - 1;
 
-  auto result = ToUnsignedBig{};
-  for (Size i = 0; i < backIndex; ++i) {
-    result.element(i, value.element(i));
+    auto result = ToUnsignedBig{};
+    for (Size i = 0; i < backIndex; ++i) {
+      result.element(i, value.element(i));
+    }
+    result.element(backIndex, value.element(backIndex) & mask);
+    return result;
   }
-  result.element(backIndex, value.element(backIndex) & mask);
-  return result;
 }
 
 // safe casting returns a valid value if fromValue
