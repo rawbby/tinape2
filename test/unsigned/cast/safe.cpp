@@ -27,7 +27,7 @@ testExhaustiveNarrowing()
     auto const narrowed = castBigSafe<UnsignedBig<4>>(UnsignedBig{ static_cast<U8>(value) });
     if (value <= 0xFU) {
       require(narrowed.has_value());
-      require(*narrowed == value);
+      require(narrowed.value() == value); // NOLINT(*-unchecked-optional-access)
     } else {
       require(!narrowed.has_value());
     }

@@ -35,13 +35,13 @@ set(SignedBig<signType, bits>& self, Value const& value, bool sign)
   }
 
   if constexpr (signType == Runtime) {
-    std::get<1>(self.mUnderlying) = sign;
+    self.mUnderlying.mSign = sign;
   }
 
   if constexpr (IsSignedIntegral<Value>) {
-    set<false>(std::get<0>(self.mUnderlying), makeUnsigned(value));
+    set<false>(self.mUnderlying.mAbs, makeUnsigned(value));
   } else {
-    set<false>(std::get<0>(self.mUnderlying), value);
+    set<false>(self.mUnderlying.mAbs, value);
   }
 }
 
@@ -92,7 +92,6 @@ constexpr SignedBig<signType, bits>::SignedBig(Value&& value)
 
 template<SignType signType, Size bits>
 template<impl::IsSignedBigRhs<signType, bits> Value>
-  requires(!Is<Value, SignedBig<signType, bits>>)
 constexpr SignedBig<signType, bits>::SignedBig(Tag<signType> /*tag*/, Value&& value)
 {
   impl::set(*this, std::forward<Value>(value));
@@ -126,7 +125,6 @@ consteval SignedBig<signType, bits>::SignedBig(Value&& value)
 
 template<SignType signType, Size bits>
 template<impl::IsSignedBigConstevalRhs<signType, bits> Value>
-  requires(!Is<Value, SignedBig<signType, bits>>)
 consteval SignedBig<signType, bits>::SignedBig(Tag<signType> /*tag*/, Value&& value)
 {
   impl::set(*this, std::forward<Value>(value));
@@ -154,17 +152,14 @@ template<SignType signType, Size bits>
 constexpr auto
 SignedBig<signType, bits>::abs() const -> UnsignedBig<bits> const&
 {
-  return std::get<0>(mUnderlying);
+  return mUnderlying.mAbs;
 }
 
 template<SignType signType, Size bits>
 constexpr auto
 SignedBig<signType, bits>::sign() const -> bool
 {
-  if constexpr (signType == Runtime) {
-    return std::get<1>(mUnderlying);
-  }
-  return signType == Positive;
+  return mUnderlying.mSign;
 }
 
 } // namespace big

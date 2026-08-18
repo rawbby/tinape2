@@ -59,24 +59,26 @@ operator==(Lhs const& lhs, Rhs const& rhs) -> bool
   constexpr auto max = std::max(Lhs::gNumElements, Rhs::gNumElements);
   constexpr auto min = std::min(Lhs::gNumElements, Rhs::gNumElements);
 
-  for (Size i = 0; i < min; ++i) {
-    if (lhs.element(i) != rhs.element(i)) {
-      return false;
-    }
-  }
-
-  if constexpr (min < Lhs::gNumElements) {
-    for (Size i = min; i < max; ++i) {
-      if (lhs.element(i) != 0) {
+  if constexpr (!Lhs::gIsZeroData && !Rhs::gIsZeroData) {
+    for (Size i = 0; i < min; ++i) {
+      if (lhs.element(i) != rhs.element(i)) {
         return false;
       }
     }
-  }
 
-  if constexpr (min < Rhs::gNumElements) {
-    for (Size i = min; i < max; ++i) {
-      if (rhs.element(i) != 0) {
-        return false;
+    if constexpr (min < Lhs::gNumElements) {
+      for (Size i = min; i < max; ++i) {
+        if (lhs.element(i) != 0) {
+          return false;
+        }
+      }
+    }
+
+    if constexpr (min < Rhs::gNumElements) {
+      for (Size i = min; i < max; ++i) {
+        if (rhs.element(i) != 0) {
+          return false;
+        }
       }
     }
   }

@@ -2,11 +2,109 @@
 
 // IWYU pragma: private, include <restricted.hpp>
 
+#include <common.hpp>
 #include <signed.hpp>
+#include <unsigned.hpp>
+
+#include <type_traits>
 
 namespace big {
 
+// NOLINTNEXTLINE(*-use-enum-class)
+enum RestrictedMode : I8
+{
+  Naive        = 0,
+  ExactShift   = 1,
+  ElementShift = 2,
+};
+
 template<IsSignedBig auto lb, IsSignedBig auto ub>
 struct RestrictedBig;
+
+namespace impl {
+
+template<IsSignedBig auto bound>
+constexpr auto elementFloor = [] {
+  if constexpr (bound == 0) {
+    return gSignedBig<0>;
+  } else {
+    constexpr Element lo = bound.abs().element(0);
+    if constexpr (bound > 0) {
+      return gSignedBig<bound - lo>;
+    } else { // bound < 0
+      if constexpr (lo == 0) {
+        return gSignedBig<bound>;
+      } else {
+        constexpr Element rem = static_cast<Element>(Element{ 0 } - lo);
+        return gSignedBig<bound - rem>;
+      }
+    }
+  }
+}();
+
+template<IsSignedBig auto lb, IsSignedBig auto ub>
+struct IsRestrictedBigHelper final : std::true_type
+{
+  static_assert(lb <= ub, "restricted lower bound must not exceed upper bound");
+
+  constexpr static auto gLb = lb;
+  constexpr static auto gUb = ub;
+
+  constexpr static auto gSignType = (lb >= 0 ? SignType::Positive : (ub <= 0 ? SignType::Negative : SignType::Runtime));
+
+  constexpr static auto gSpan     = ub - lb;
+  constexpr static auto gSpanBits = decltype(gUnsignedBig<gSpan.abs()>)::gBits;
+  constexpr static auto gMagBits  = decltype(gUnsignedBig<gMax<lb.abs(), ub.abs()>>)::gBits;
+
+  constexpr static auto gMode = [] {
+    if constexpr (gMagBits <= gWideBits) {
+      return RestrictedMode::Naive;
+    } else if constexpr (lb.sign() == ub.sign() && gSpanBits <= gWideBits) {
+      return RestrictedMode::ExactShift;
+    } else {
+      return RestrictedMode::ElementShift;
+    }
+  }();
+
+  constexpr static auto gBias = [] {
+    if constexpr (gMode == RestrictedMode::Naive) {
+      return gSignedBig<0>;
+    } else if constexpr (gMode == RestrictedMode::ExactShift) {
+      return lb;
+    } else {
+      return elementFloor<lb>;
+    }
+  }();
+
+  static_assert(gMode == RestrictedMode::Naive || lb - gBias >= 0, "restricted lower bound must not be smaller than bias");
+
+  using Storage = std::conditional_t<gMode == RestrictedMode::Naive,
+                                     SignedBig<gSignType, gMagBits>,
+                                     std::conditional_t<gMode == RestrictedMode::ExactShift,
+                                                        UnsignedBig<gSpanBits>,
+                                                        UnsignedBig<((decltype(gUnsignedBig<(ub - gBias).abs()>)::gBits + gElementBits - 1) / gElementBits) * gElementBits>>>;
+
+  constexpr static auto gBits = Storage::gBits;
+};
+
+template<typename T>
+struct IsRestrictedBigType final : std::false_type
+{};
+
+template<IsSignedBig auto lb, IsSignedBig auto ub>
+struct IsRestrictedBigType<RestrictedBig<lb, ub>> final : std::true_type
+{
+  using Helper              = IsRestrictedBigHelper<lb, ub>;
+  constexpr static auto gLb = lb;
+  constexpr static auto gUb = ub;
+};
+
+} // namespace impl
+
+template<typename T>
+concept IsRestrictedBig = impl::IsRestrictedBigType<std::remove_cvref_t<T>>::value;
+
+template<IsRestrictedBig... Ts>
+using CommonRestrictedBig = RestrictedBig<gMin<impl::IsRestrictedBigType<std::remove_cvref_t<Ts>>::gLb...>, gMax<impl::IsRestrictedBigType<std::remove_cvref_t<Ts>>::gUb...>>;
 
 } // namespace big

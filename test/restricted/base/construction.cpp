@@ -1,7 +1,6 @@
-#include <common.hpp>
 #include <restricted.hpp>
+#include <signed.hpp>
 
-#include <array>
 #include <cstdlib>
 #include <exception>
 
@@ -14,6 +13,8 @@ using namespace big;
 void
 testConstruction()
 {
+  RestrictedBig<gSignedBig<-5>, gSignedBig<10>> const restrictedVal{};
+  static_cast<void>(restrictedVal);
 }
 
 } // namespace

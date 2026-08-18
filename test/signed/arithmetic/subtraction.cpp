@@ -43,7 +43,7 @@ void
 testSelfSubtractionIsZero()
 {
   constexpr auto value = SignedBig{ static_cast<I8>(-100) };
-  static_assert(value - value == 0);
+  static_assert(value - value == 0); // NOLINT(misc-redundant-expression)
 }
 
 /// subtraction may go below zero

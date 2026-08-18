@@ -64,7 +64,7 @@ operator-(SignedBig<lhsSignType, lhsBits> const& lhs, SignedBig<rhsSignType, rhs
 {
   // if compile time sign inequality
   if constexpr (SignType::Runtime != lhsSignType && SignType::Runtime != rhsSignType && lhsSignType != rhsSignType) {
-    return SignedBig{ lhsSignType, lhs.abs() + rhs.abs() };
+    return SignedBig{ gTag<lhsSignType>, lhs.abs() + rhs.abs() };
 
   } else { // all other cases require runtime evaluation
 

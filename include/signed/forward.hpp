@@ -18,6 +18,22 @@ enum SignType : I8
   Runtime  = 2,
 };
 
+template<Size bits, SignType signType>
+struct SignedUnderlying
+{
+  // NOLINTNEXTLINE(*-identifier-naming)
+  static constexpr bool mSign = signType == Positive;
+
+  [[no_unique_address]] UnsignedBig<bits> mAbs{};
+};
+
+template<Size bits>
+struct SignedUnderlying<bits, Runtime>
+{
+  [[no_unique_address]] UnsignedBig<bits> mAbs{};
+  bool                                    mSign{};
+};
+
 template<SignType signType, Size bits>
 class SignedBig;
 
@@ -41,7 +57,7 @@ template<SignType signType, Size bits>
 struct IsSignedBigHelper<SignedBig<signType, bits>> final : std::true_type
 {
   using Unsigned   = UnsignedBig<bits>;
-  using Underlying = std::conditional_t<signType == Runtime, std::tuple<Unsigned, bool>, std::tuple<Unsigned>>;
+  using Underlying = SignedUnderlying<bits, signType>;
   using Data       = Unsigned::Data;
 
   constexpr static auto gBits          = Unsigned::gBits;
@@ -63,7 +79,7 @@ concept IsSignedBigRhs =
    // with compatible sign
    (impl::IsSignedBigHelper<std::remove_cvref_t<Value>>::gSignType == signType || Runtime == signType) &&
    // with compatible bits
-   impl::IsSignedBigHelper<std::remove_cvref_t<Value>>::gSignType <= bits) ||
+   impl::IsSignedBigHelper<std::remove_cvref_t<Value>>::gBits <= bits) ||
 
   // or compatible unsigned big or native type
   ((IsUnsignedBig<Value> || IsUnsignedIntegral<Value> || IsElements<Value> || IsLimbs<Value>) &&
@@ -96,7 +112,7 @@ using CommonSignedBig = SignedBig<
     ((Ts::gSignType == std::tuple_element_t<0, std::tuple<Ts...>>::gSignType) && ...)
         ? std::tuple_element_t<0, std::tuple<Ts...>>::gSignType
         : SignType::Runtime,
-    CommonUnsignedBig<typename Ts::UnsignedBig...>::gBits>;
+    CommonUnsignedBig<typename Ts::Unsigned...>::gBits>;
 // clang-format on
 
 } // namespace big

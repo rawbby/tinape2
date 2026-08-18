@@ -1,6 +1,5 @@
 #include <common.hpp>
 #include <signed.hpp>
-#include <unsigned.hpp>
 
 #include <cstdlib>
 #include <exception>
@@ -28,7 +27,7 @@ testExhaustiveNarrowing()
     auto const narrowed = castBigSafe<SignedBig<Runtime, 4>>(SignedBig{ static_cast<I8>(value) });
     if (value >= -15 && value <= 15) {
       require(narrowed.has_value());
-      require(*narrowed == value);
+      require(narrowed.value() == value); // NOLINT(*-unchecked-optional-access)
     } else {
       require(!narrowed.has_value());
     }

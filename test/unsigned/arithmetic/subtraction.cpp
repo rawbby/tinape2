@@ -44,7 +44,7 @@ void
 testSelfSubtractionIsZero()
 {
   constexpr auto value = UnsignedBig{ static_cast<U8>(200U) };
-  static_assert(value - value == 0U);
+  static_assert(value - value == 0U); // NOLINT(misc-redundant-expression)
 }
 
 /// subtraction must invert addition

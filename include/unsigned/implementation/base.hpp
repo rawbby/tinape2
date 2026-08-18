@@ -99,12 +99,14 @@ set(UnsignedBig<bits>& self, Elements<size> const& elements)
     }
   }
 
-  constexpr auto min = std::min(Self::gNumElements, size);
-  for (Size i = 0; i < min; ++i) {
-    self.element(i, elements[i]);
-  }
-  if constexpr (Self::gNumElements > size) {
-    fillZero(self, size);
+  if constexpr (!Self::gIsZeroData) {
+    constexpr auto min = std::min(Self::gNumElements, size);
+    for (Size i = 0; i < min; ++i) {
+      self.element(i, elements[i]);
+    }
+    if constexpr (Self::gNumElements > size) {
+      fillZero(self, size);
+    }
   }
 }
 
@@ -121,21 +123,23 @@ set(UnsignedBig<bits>& self, Limbs<size> const& limbs)
     }
   }
 
-  if constexpr (Self::gIsWideData) {
-    // we can not write wide data via element if it has not yet been initialized
-    self.mData = 0;
-  }
-
-  constexpr auto min = std::min(Self::gNumElements * 2, size);
-  for (Size i = 0; i < min; i += 2) {
-    Element value = limbs[i];
-    if (i + 1 < size) {
-      value |= static_cast<Element>(limbs[i + 1]) << gBitsOf<Limb>;
+  if constexpr (!Self::gIsZeroData) {
+    if constexpr (Self::gIsWideData) {
+      // we can not write wide data via element if it has not yet been initialized
+      self.mData = 0;
     }
-    self.element(i / 2, value);
-  }
-  if constexpr (Self::gNumElements * 2 > size) {
-    fillZero(self, (size + 1) / 2);
+
+    constexpr auto min = std::min(Self::gNumElements * 2, size);
+    for (Size i = 0; i < min; i += 2) {
+      Element value = limbs[i];
+      if (i + 1 < size) {
+        value |= static_cast<Element>(limbs[i + 1]) << gBitsOf<Limb>;
+      }
+      self.element(i / 2, value);
+    }
+    if constexpr (Self::gNumElements * 2 > size) {
+      fillZero(self, (size + 1) / 2);
+    }
   }
 }
 
@@ -143,7 +147,9 @@ template<bool skipCheck, IsUnsignedBig Value, Size bits>
 constexpr void
 set(UnsignedBig<bits>& self, Value const& value)
 {
-  set<skipCheck>(self, value.mData);
+  if constexpr (!Value::gIsZeroData) {
+    set<skipCheck>(self, value.mData);
+  }
 }
 } // namespace impl
 

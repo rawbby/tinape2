@@ -46,7 +46,6 @@ public:
   constexpr explicit SignedBig(Value&& value);
 
   template<impl::IsSignedBigRhs<signType, bits> Value>
-    requires(!Is<Value, SignedBig<signType, bits>>)
   constexpr explicit SignedBig(Tag<signType> /*tag*/, Value&& value);
 
   template<impl::IsSignedBigRhs<signType, bits> Value>
@@ -62,7 +61,6 @@ public:
   consteval explicit SignedBig(Value&& value);
 
   template<impl::IsSignedBigConstevalRhs<signType, bits> Value>
-    requires(!Is<Value, SignedBig<signType, bits>>)
   consteval explicit SignedBig(Tag<signType> /*tag*/, Value&& value);
 
   template<impl::IsSignedBigConstevalRhs<signType, bits> Value>
@@ -93,6 +91,9 @@ SignedBig() -> SignedBig<Positive, 0>;
 
 template<IsSignedBig Value>
 SignedBig(Value const&) -> SignedBig<Value::gSignType, Value::gBits>;
+
+template<IsSignedBig Value, SignType signType>
+SignedBig(Tag<signType>, Value const&) -> SignedBig<signType, Value::gBits>;
 
 template<IsSignedIntegral Value>
 SignedBig(Value) -> SignedBig<Runtime, gBitsOf<Value> - 1>;

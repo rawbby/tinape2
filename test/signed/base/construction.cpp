@@ -47,15 +47,15 @@ concept IsConstructible = requires(Args... args) { Target{ args... }; };
 /// value level check whether an expression is a valid constant expression
 /// the consteval only overloads reject invalid values by throwing during constant evaluation
 template<typename Lambda, int = (Lambda{}(), 0)>
-constexpr auto
-isConstantEvaluable(Lambda /* lambda */) -> bool
+constexpr bool
+isConstantEvaluable(Lambda /* lambda */)
 {
   return true;
 }
 
 // NOLINTNEXTLINE(cert-dcl50-cpp)
-constexpr auto
-isConstantEvaluable(auto...) -> bool
+constexpr bool
+isConstantEvaluable(auto... /*unused*/)
 {
   return false;
 }
@@ -108,18 +108,15 @@ testRuntimeSourceConceptRejectsConstevalOnlySources()
   static_assert(!impl::IsSignedBigRhs<UnsignedBig<16>, Positive, 8>);
   static_assert(!impl::IsSignedBigRhs<I16, Runtime, 7>);
   static_assert(!impl::IsSignedBigRhs<Elements<3>, Positive, 2 * gElementBits>);
+  static_assert(!impl::IsSignedBigRhs<Positive64, Positive, 8>);
+  static_assert(!impl::IsSignedBigRhs<Positive64, Positive, 1>);
+  static_assert(!impl::IsSignedBigRhs<Positive64, Positive, 0>);
 
   // a compile time sign type can not adopt a foreign sign
   static_assert(!impl::IsSignedBigRhs<Positive8, Negative, 8>);
   static_assert(!impl::IsSignedBigRhs<Negative8, Positive, 8>);
   static_assert(!impl::IsSignedBigRhs<Runtime8, Positive, 8>);
   static_assert(!impl::IsSignedBigRhs<Runtime8, Negative, 8>);
-
-  // NOTE: current behaviour compares the sign type instead of the bit width for signed big sources
-  // which lets a wide signed big source pass the runtime concept of a narrow target
-  static_assert(impl::IsSignedBigRhs<Positive64, Positive, 8>);
-  static_assert(impl::IsSignedBigRhs<Positive64, Positive, 1>);
-  static_assert(!impl::IsSignedBigRhs<Positive64, Positive, 0>);
 }
 
 /// impl::IsSignedBigConstevalRhs covers exactly the sources which are rejected at runtime

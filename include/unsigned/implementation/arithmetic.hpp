@@ -19,8 +19,15 @@ template<Size lhsBits, Size rhsBits>
 constexpr auto
 operator+(UnsignedBig<lhsBits> const& lhs, UnsignedBig<rhsBits> const& rhs)
 {
-  // ensure bigger num gets swapped into lhs
-  if constexpr (rhsBits > lhsBits) {
+  if constexpr (UnsignedBig<rhsBits>::gIsZeroData) {
+    return lhs;
+  }
+
+  else if constexpr (UnsignedBig<lhsBits>::gIsZeroData) {
+    return rhs;
+  }
+
+  else if constexpr (rhsBits > lhsBits) {
     return rhs + lhs;
 
   } else {
@@ -69,89 +76,103 @@ template<Size lhsBits, Size rhsBits>
 constexpr auto
 operator-(UnsignedBig<lhsBits> const& lhs, UnsignedBig<rhsBits> const& rhs)
 {
-  if (std::is_constant_evaluated()) {
-    if (rhs > lhs) {
-      throw std::invalid_argument{ "undefined behaviour" };
-    }
+  if (std::is_constant_evaluated() && rhs > lhs) {
+    throw std::invalid_argument{ "undefined behaviour" };
   }
 
-  // a - b <= a for unsigned values, so the result can never need more bits than lhs;
-  // underflow wraps modulo 2^lhsBits like builtin unsigned arithmetic
-  using ResType = UnsignedBig<lhsBits>;
-  using LhsType = UnsignedBig<lhsBits>;
-  using RhsType = UnsignedBig<rhsBits>;
-
-  auto difference = ResType{};
-
-  if constexpr (!ResType::gIsArrayData && !RhsType::gIsArrayData) {
-    difference.mData = static_cast<ResType::Data>(static_cast<ResType::Data>(lhs.mData) - static_cast<ResType::Data>(rhs.mData));
-
-  } else {
-    auto borrow = Element{ 0 }; // NOLINT(*-identifier-length)
-    auto i      = Size{ 0 };    // NOLINT(*-identifier-length)
-
-    // loop common elements for all
-    for (; i < std::min(LhsType::gNumElements, RhsType::gNumElements); ++i) {
-      auto const differenceElement = static_cast<Wide>(lhs.element(i)) - rhs.element(i) - borrow;
-      difference.element(i, loHalf(differenceElement));
-      borrow = hiHalf(differenceElement) & 1U;
-    }
-    // lhs tail for diff, rhs reads as zero
-    for (; i < LhsType::gNumElements; ++i) {
-      auto const differenceElement = static_cast<Wide>(lhs.element(i)) - borrow;
-      difference.element(i, loHalf(differenceElement));
-      borrow = hiHalf(differenceElement) & 1U;
-    }
-    // any rhs tail beyond lhs is discarded: the result wraps modulo 2^lhsBits
+  if constexpr (UnsignedBig<rhsBits>::gIsZeroData) {
+    return lhs;
   }
-  return difference;
+
+  else if constexpr (UnsignedBig<lhsBits>::gIsZeroData) {
+    return UnsignedBig<0>{};
+  }
+
+  else {
+    // a - b <= a for unsigned values, so the result can never need more bits than lhs;
+    // underflow wraps modulo 2^lhsBits like builtin unsigned arithmetic
+    using ResType = UnsignedBig<lhsBits>;
+    using LhsType = UnsignedBig<lhsBits>;
+    using RhsType = UnsignedBig<rhsBits>;
+
+    auto difference = ResType{};
+
+    if constexpr (!ResType::gIsArrayData && !RhsType::gIsArrayData) {
+      difference.mData = static_cast<ResType::Data>(static_cast<ResType::Data>(lhs.mData) - static_cast<ResType::Data>(rhs.mData));
+
+    } else {
+      auto borrow = Element{ 0 }; // NOLINT(*-identifier-length)
+      auto i      = Size{ 0 };    // NOLINT(*-identifier-length)
+
+      // loop common elements for all
+      for (; i < std::min(LhsType::gNumElements, RhsType::gNumElements); ++i) {
+        auto const differenceElement = static_cast<Wide>(lhs.element(i)) - rhs.element(i) - borrow;
+        difference.element(i, loHalf(differenceElement));
+        borrow = hiHalf(differenceElement) & 1U;
+      }
+      // lhs tail for diff, rhs reads as zero
+      for (; i < LhsType::gNumElements; ++i) {
+        auto const differenceElement = static_cast<Wide>(lhs.element(i)) - borrow;
+        difference.element(i, loHalf(differenceElement));
+        borrow = hiHalf(differenceElement) & 1U;
+      }
+      // any rhs tail beyond lhs is discarded: the result wraps modulo 2^lhsBits
+    }
+    return difference;
+  }
 }
 
 template<Size lhsBits, Size rhsBits>
 constexpr auto
 operator*(UnsignedBig<lhsBits> const& lhs, UnsignedBig<rhsBits> const& rhs)
 {
-  constexpr auto resBits = lhsBits == 0 || rhsBits == 0 ? 0 : (lhsBits == 1 ? 0 : lhsBits) + (rhsBits == 1 ? 0 : rhsBits);
-  using ResType          = UnsignedBig<resBits>;
-  using LhsType          = UnsignedBig<lhsBits>;
-  using RhsType          = UnsignedBig<rhsBits>;
-
-  auto product = ResType{};
-
-  if constexpr (!ResType::gIsArrayData) {
-    product.mData = static_cast<ResType::Data>(static_cast<ResType::Data>(lhs.mData) * rhs.mData);
-
-  } else {
-    // NOLINTBEGIN(*-pointer-arithmetic)
-    constexpr auto lhsN     = LhsType::gNumElements;
-    constexpr auto rhsN     = RhsType::gNumElements;
-    constexpr auto productN = lhsN + rhsN;
-    constexpr auto scratchN = karatsuba::gScratchSize<productN>;
-
-    // one up-front stack allocation holding operands, result and all scratch;
-    // mulRec picks schoolbook or sub-quadratic O(N^1.58) karatsuba per size at compile time
-    auto buffer = Elements<productN * 2 + scratchN>{};
-
-    auto* pLhsBuffer = buffer.data();
-    for (Size i = 0; i < lhsN; ++i) {
-      pLhsBuffer[i] = lhs.element(i);
-    }
-
-    auto* pRhsBuffer = pLhsBuffer + lhsN;
-    for (Size i = 0; i < rhsN; ++i) {
-      pRhsBuffer[i] = rhs.element(i);
-    }
-
-    auto* pProductBuffer = pRhsBuffer + rhsN;
-    karatsuba::mulRec<lhsN, rhsN>(pLhsBuffer, pRhsBuffer, pProductBuffer, pProductBuffer + productN);
-
-    for (Size i = 0; i < ResType::gNumElements; ++i) {
-      product.element(i, pProductBuffer[i]);
-    }
-
-    // NOLINTEND(*-pointer-arithmetic)
+  if constexpr (UnsignedBig<lhsBits>::gIsZeroData || UnsignedBig<rhsBits>::gIsZeroData) {
+    return UnsignedBig<0>{};
   }
-  return product;
+
+  else {
+    constexpr auto resBits = (lhsBits == 1 ? 0 : lhsBits) + (rhsBits == 1 ? 0 : rhsBits);
+    using ResType          = UnsignedBig<resBits>;
+    using LhsType          = UnsignedBig<lhsBits>;
+    using RhsType          = UnsignedBig<rhsBits>;
+
+    auto product = ResType{};
+
+    if constexpr (!ResType::gIsArrayData) {
+      product.mData = static_cast<ResType::Data>(static_cast<ResType::Data>(lhs.mData) * rhs.mData);
+
+    } else {
+      // NOLINTBEGIN(*-pointer-arithmetic)
+      constexpr auto lhsN     = LhsType::gNumElements;
+      constexpr auto rhsN     = RhsType::gNumElements;
+      constexpr auto productN = lhsN + rhsN;
+      constexpr auto scratchN = karatsuba::gScratchSize<productN>;
+
+      // one up-front stack allocation holding operands, result and all scratch;
+      // mulRec picks schoolbook or sub-quadratic O(N^1.58) karatsuba per size at compile time
+      auto buffer = Elements<productN * 2 + scratchN>{};
+
+      auto* pLhsBuffer = buffer.data();
+      for (Size i = 0; i < lhsN; ++i) {
+        pLhsBuffer[i] = lhs.element(i);
+      }
+
+      auto* pRhsBuffer = pLhsBuffer + lhsN;
+      for (Size i = 0; i < rhsN; ++i) {
+        pRhsBuffer[i] = rhs.element(i);
+      }
+
+      auto* pProductBuffer = pRhsBuffer + rhsN;
+      karatsuba::mulRec<lhsN, rhsN>(pLhsBuffer, pRhsBuffer, pProductBuffer, pProductBuffer + productN);
+
+      for (Size i = 0; i < ResType::gNumElements; ++i) {
+        product.element(i, pProductBuffer[i]);
+      }
+
+      // NOLINTEND(*-pointer-arithmetic)
+    }
+    return product;
+  }
 }
 
 template<typename Rhs>
