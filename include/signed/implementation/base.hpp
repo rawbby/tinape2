@@ -114,7 +114,16 @@ SignedBig<signType, bits>::set(Value value)
   using ValueUnsigned  = MakeUnsigned<Value>;
   auto const valueSign = value >= 0;
   auto const valueAbs  = static_cast<ValueUnsigned>(valueSign ? value : -value);
-  set(valueAbs, valueSign);
+
+  if constexpr (signType == Runtime) {
+    set(valueAbs, valueSign);
+  } else {
+    // for compile time sign types the magnitude is taken from the value and the sign from the type
+    if (std::is_constant_evaluated() && !valueSign) {
+      throw std::invalid_argument{ "non runtime signed big assumes positive parameter value" };
+    }
+    set(valueAbs, signType != Negative);
+  }
 }
 
 template<SignType signType, Size bits>
@@ -123,7 +132,7 @@ constexpr void
 SignedBig<signType, bits>::set(Value const& value, bool sign)
 {
   if (std::is_constant_evaluated()) {
-    if constexpr (signType != Runtime) {
+    if constexpr (signType != Runtime && IsSignedIntegral<Value>) {
       if (value < 0) {
         throw std::invalid_argument{ "non runtime signed big assumes positive parameter value" };
       }

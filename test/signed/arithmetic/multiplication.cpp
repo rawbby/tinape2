@@ -18,8 +18,6 @@ require(bool condition)
 }
 
 /// exhaustive signed 8 bit multiplication evaluated against the built in integer reference
-
-/// exhaustive signed 8 bit multiplication evaluated against the built in integer reference
 void
 testExhaustiveAgainstReference()
 {
